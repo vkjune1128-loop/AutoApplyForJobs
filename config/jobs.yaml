@@ -1,0 +1,39 @@
+# ─────────────────────────────────────────────────────────────
+# Target Jobs Queue for Smart Copilot
+# ─────────────────────────────────────────────────────────────
+# Add job postings here. Run `autoapply copilot` to:
+#  1. Analyze ATS match score against master_resume.yaml
+#  2. Auto-generate tailored Vikas_Kumar_{Company}_{Role}.pdf
+#  3. Create personalized 3-sentence recruiter outreach note
+#  4. Generate an interactive action dashboard (data/copilot_dashboard.html)
+# ─────────────────────────────────────────────────────────────
+
+jobs:
+  - company: "Capgemini"
+    role: "Software Engineer - Java / Kafka"
+    location: "Bengaluru, India"
+    platform: "naukri"
+    url: "https://www.naukri.com/job-listings-software-engineer-java-kafka-capgemini-bengaluru-4-to-6-years-300926036323"
+    jd: >
+      Software Engineer / Backend Java Developer with 4 to 6 years of experience in Core Java, Spring Boot,
+      Microservices, and Apache Kafka in Bengaluru. Hands-on experience with RESTful APIs, relational/NoSQL databases,
+      JUnit, Mockito, and CI/CD pipelines.
+
+  - company: "Oracle"
+    role: "Senior Java Backend Engineer"
+    location: "Bengaluru / Hyderabad"
+    platform: "linkedin"
+    url: "https://www.oracle.com/careers"
+    jd: >
+      Senior Software Developer with 4-7 years experience designing high-performance distributed systems using Java 17,
+      Spring Boot, Microservices, and SQL/NoSQL databases. Strong understanding of multi-threading, REST APIs,
+      caching solutions (Redis), and event-driven architectures.
+
+  - company: "PayPal"
+    role: "Software Engineer - Java Services"
+    location: "Bengaluru"
+    platform: "naukri"
+    url: "https://www.paypal.com/jobs"
+    jd: >
+      Backend Software Engineer with 4+ years building high-throughput payment transaction pipelines.
+      Expertise in Core Java, Spring Boot, asynchronous batch processing, Kafka, PostgreSQL, and AWS.

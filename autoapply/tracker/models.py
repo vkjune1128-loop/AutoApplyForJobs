@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from sqlmodel import Field, SQLModel
@@ -21,7 +21,7 @@ class Job(SQLModel, table=True):
     url: str = Field(index=True, unique=True)
     jd_text: str = ""
     posted_date: str = ""
-    scraped_at: datetime = Field(default_factory=datetime.utcnow)
+    scraped_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class Application(SQLModel, table=True):
@@ -35,7 +35,7 @@ class Application(SQLModel, table=True):
     status: str = Field(index=True)  # "applied", "skipped", "failed", "dry_run"
     tailored_resume_path: str = ""
     ats_score: int | None = None
-    applied_at: datetime = Field(default_factory=datetime.utcnow)
+    applied_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     notes: str = ""
 
 
@@ -50,4 +50,4 @@ class TailoredResume(SQLModel, table=True):
     tailored_summary: str = ""
     matched_keywords: str = ""  # JSON-serialized list
     ats_score: int | None = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

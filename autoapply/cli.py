@@ -61,11 +61,28 @@ def cmd_tailor(args: argparse.Namespace) -> None:
     console.print(f"  Matched: {', '.join(score['matched'])}")
     console.print(f"  Missing: {', '.join(score['missing'])}")
 
-    # Generate PDF
-    output = args.output or "data/generated_resumes/tailored_resume.pdf"
+    # Generate PDF with professional naming convention: Vikas_Kumar_{Company}_{Role}.pdf
+    if args.output:
+        output = args.output
+    else:
+        name_part = resume.name.strip().replace(" ", "_")
+        company_part = (args.company or "Company").strip().replace(" ", "_")
+        role_part = (args.role or "Java_Backend").strip().replace(" ", "_")
+        filename = f"{name_part}_{company_part}_{role_part}.pdf"
+        output = f"data/generated_resumes/{filename}"
+
     Path(output).parent.mkdir(parents=True, exist_ok=True)
     generate_resume_pdf(tailored.model_dump(), output)
-    console.print(f"[green]✓ Tailored resume saved to {output}[/green]")
+    console.print(f"[green]✓ Tailored resume saved to: [bold]{output}[/bold][/green]")
+
+    # Generate custom cover note for recruiters
+    cover_note = tailor.generate_cover_note(resume, jd_text)
+    if cover_note:
+        console.print("\n[bold cyan]📨 3-Sentence Recruiter Outreach Note:[/bold cyan]")
+        console.print(f"[italic]{cover_note}[/italic]\n")
+
+        note_file = Path(output).with_suffix(".txt")
+        note_file.write_text(cover_note, encoding="utf-8")
 
 
 def cmd_apply(args: argparse.Namespace) -> None:
@@ -215,6 +232,228 @@ def cmd_ats_check(args: argparse.Namespace) -> None:
         console.print(text[:2000])
 
 
+def cmd_copilot(args: argparse.Namespace) -> None:
+    """Run Smart Copilot batch matching and document generation."""
+    import yaml
+    from autoapply.config.schemas import ResumeData
+    from autoapply.core.tailor import ResumeTailor
+    from autoapply.core.pdf_generator import generate_resume_pdf
+    from autoapply.tracker.db import get_engine, get_session, init_db
+    from autoapply.tracker.models import Job, Application
+
+    settings = Settings()
+    min_score = args.min_score or 65
+
+    # Load master resume
+    resume_path = Path("config/master_resume.yaml")
+    if not resume_path.exists():
+        console.print("[red]config/master_resume.yaml not found[/red]")
+        sys.exit(1)
+
+    with open(resume_path) as f:
+        resume_raw = yaml.safe_load(f)
+    resume = ResumeData.model_validate(resume_raw)
+
+    # Load jobs
+    jobs_file = Path(args.jobs_file or "config/jobs.yaml")
+    if not jobs_file.exists():
+        console.print(f"[red]Jobs queue file not found: {jobs_file}[/red]")
+        sys.exit(1)
+
+    with open(jobs_file) as f:
+        jobs_data = yaml.safe_load(f)
+
+    job_list = jobs_data.get("jobs", [])
+    if not job_list:
+        console.print("[yellow]No jobs found in queue.[/yellow]")
+        return
+
+    console.print(f"[bold cyan]🚀 Smart Copilot analyzing {len(job_list)} job(s)...[/bold cyan]\n")
+
+    tailor = ResumeTailor(api_key=settings.gemini_api_key)
+    engine = get_engine(settings.db_path)
+    init_db(engine)
+
+    table = Table(title="Smart Copilot — Job Match & Action Digest")
+    table.add_column("Company", style="bold white")
+    table.add_column("Role", style="cyan")
+    table.add_column("Platform", style="magenta")
+    table.add_column("ATS Match", justify="center")
+    table.add_column("Action / PDF", style="green")
+
+    digest_items = []
+
+    for item in job_list:
+        company = item.get("company", "Company")
+        role = item.get("role", "Software Engineer")
+        platform = item.get("platform", "web")
+        url = item.get("url", "#")
+        jd = item.get("jd", "")
+
+        # Extract keywords and score
+        kw = tailor.extract_jd_keywords(jd)
+        score_res = tailor.estimate_ats_score(resume, kw)
+        score = score_res["score"]
+
+        # Filename
+        name_clean = resume.name.strip().replace(" ", "_")
+        comp_clean = company.strip().replace(" ", "_")
+        role_clean = role.strip().replace(" ", "_").replace("/", "_").replace("-", "_")
+        pdf_filename = f"{name_clean}_{comp_clean}_{role_clean}.pdf"
+        pdf_path = Path(f"data/generated_resumes/{pdf_filename}")
+
+        if score >= min_score:
+            score_badge = f"[bold green]{score}% ✓[/bold green]"
+            # Tailor and generate PDF
+            tailored = tailor.tailor_resume(resume, jd, kw)
+            pdf_path.parent.mkdir(parents=True, exist_ok=True)
+            generate_resume_pdf(tailored.model_dump(), str(pdf_path))
+
+            # Cover note
+            cover_note = tailor.generate_cover_note(resume, jd)
+            note_file = pdf_path.with_suffix(".txt")
+            note_file.write_text(cover_note, encoding="utf-8")
+
+            # Log to DB
+            with get_session(engine) as session:
+                from sqlmodel import select
+                existing_job = session.exec(select(Job).where(Job.url == url)).first() if url != "#" else None
+                if existing_job:
+                    job_rec = existing_job
+                else:
+                    job_rec = Job(
+                        platform=platform,
+                        title=role,
+                        company=company,
+                        location=item.get("location", ""),
+                        url=url if url != "#" else f"urn:{comp_clean}:{role_clean}",
+                        jd_text=jd,
+                    )
+                    session.add(job_rec)
+                    session.commit()
+                    session.refresh(job_rec)
+
+                app_rec = Application(
+                    job_id=job_rec.id,
+                    platform=platform,
+                    status="ready_to_apply",
+                    tailored_resume_path=str(pdf_path),
+                    ats_score=score,
+                    notes=cover_note,
+                )
+                session.add(app_rec)
+                session.commit()
+
+            action_text = f"[green]Ready[/green] ({pdf_filename})"
+        else:
+            score_badge = f"[yellow]{score}% (Low)[/yellow]"
+            action_text = "[dim]Skipped (< threshold)[/dim]"
+            cover_note = ""
+
+        table.add_row(company, role, platform.upper(), score_badge, action_text)
+
+        digest_items.append({
+            "company": company,
+            "role": role,
+            "platform": platform,
+            "url": url,
+            "location": item.get("location", ""),
+            "score": score,
+            "pdf_path": str(pdf_path) if score >= min_score else None,
+            "pdf_name": pdf_filename if score >= min_score else None,
+            "cover_note": cover_note,
+            "recommended": score >= min_score,
+        })
+
+    console.print(table)
+
+    # Generate HTML Action Digest Dashboard
+    digest_html_path = Path("data/copilot_dashboard.html")
+    _render_copilot_html(digest_items, resume.name, digest_html_path)
+    console.print(f"\n[bold green]✓ Action Dashboard generated at:[/bold green] [underline]{digest_html_path}[/underline]")
+
+
+def _render_copilot_html(items: list[dict], candidate_name: str, output_path: Path) -> None:
+    """Render an interactive HTML action dashboard for Smart Copilot."""
+    cards_html = []
+    for it in items:
+        badge_class = "badge-high" if it["score"] >= 80 else ("badge-med" if it["score"] >= 65 else "badge-low")
+        pdf_button = (
+            f'<a href="generated_resumes/{it["pdf_name"]}" target="_blank" class="btn btn-pdf">📄 Open Tailored PDF</a>'
+            if it["pdf_path"]
+            else '<span class="skipped-label">Below Threshold</span>'
+        )
+        note_section = (
+            f'<div class="note-box"><p class="note-text" id="note-{it["company"]}">{it["cover_note"]}</p>'
+            f'<button onclick="navigator.clipboard.writeText(document.getElementById(\'note-{it["company"]}\').innerText); alert(\'Copied outreach note!\');" class="btn btn-copy">📋 Copy Outreach Note</button></div>'
+            if it["cover_note"]
+            else ""
+        )
+
+        cards_html.append(f"""
+        <div class="job-card">
+            <div class="card-header">
+                <div>
+                    <h3>{it['role']}</h3>
+                    <div class="company-sub">{it['company']} • <span class="loc">{it['location']}</span> • <span class="plat">{it['platform'].upper()}</span></div>
+                </div>
+                <div class="score-badge {badge_class}">{it['score']}% ATS</div>
+            </div>
+            <div class="card-actions">
+                {pdf_button}
+                <a href="{it['url']}" target="_blank" class="btn btn-apply">🚀 Apply on {it['platform'].title()}</a>
+            </div>
+            {note_section}
+        </div>
+        """)
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Copilot — Daily Action Digest</title>
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 2rem; }}
+        .container {{ max-width: 900px; margin: 0 auto; }}
+        header {{ text-align: center; margin-bottom: 2rem; border-bottom: 1px solid #334155; padding-bottom: 1.5rem; }}
+        h1 {{ font-size: 1.8rem; margin: 0 0 0.5rem 0; color: #38bdf8; }}
+        p.subtitle {{ color: #94a3b8; margin: 0; }}
+        .job-card {{ background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }}
+        .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }}
+        h3 {{ margin: 0 0 0.25rem 0; font-size: 1.2rem; }}
+        .company-sub {{ font-size: 0.9rem; color: #94a3b8; }}
+        .plat {{ background: #475569; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; color: #fff; }}
+        .score-badge {{ font-weight: bold; padding: 6px 12px; border-radius: 8px; font-size: 0.95rem; }}
+        .badge-high {{ background: #166534; color: #86efac; border: 1px solid #22c55e; }}
+        .badge-med {{ background: #854d0e; color: #fef08a; border: 1px solid #eab308; }}
+        .badge-low {{ background: #7f1d1d; color: #fca5a5; }}
+        .card-actions {{ display: flex; gap: 0.75rem; align-items: center; margin-top: 1rem; flex-wrap: wrap; }}
+        .btn {{ display: inline-block; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; text-decoration: none; font-weight: 500; cursor: pointer; border: none; }}
+        .btn-apply {{ background: #2563eb; color: #fff; }}
+        .btn-apply:hover {{ background: #1d4ed8; }}
+        .btn-pdf {{ background: #059669; color: #fff; }}
+        .btn-pdf:hover {{ background: #047857; }}
+        .btn-copy {{ background: #475569; color: #fff; font-size: 0.8rem; margin-top: 0.5rem; }}
+        .btn-copy:hover {{ background: #64748b; }}
+        .note-box {{ background: #0f172a; border: 1px dashed #475569; border-radius: 8px; padding: 0.75rem 1rem; margin-top: 1rem; }}
+        .note-text {{ margin: 0; font-size: 0.88rem; color: #cbd5e1; font-style: italic; }}
+        .skipped-label {{ color: #94a3b8; font-size: 0.85rem; font-style: italic; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Smart Copilot Action Digest</h1>
+            <p class="subtitle">Candidate: <strong>{candidate_name}</strong> • High-Impact Target Roles</p>
+        </header>
+        {"".join(cards_html)}
+    </div>
+</body>
+</html>"""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(html, encoding="utf-8")
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI argument parser."""
     parser = argparse.ArgumentParser(
@@ -227,6 +466,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_tailor = subparsers.add_parser("tailor", help="Tailor resume for a specific JD")
     p_tailor.add_argument("--jd", type=str, help="Job description text")
     p_tailor.add_argument("--jd-file", type=str, help="Path to JD text file")
+    p_tailor.add_argument("--company", "-c", type=str, help="Company name (e.g. Capgemini)")
+    p_tailor.add_argument("--role", type=str, help="Role name (e.g. Java_Kafka)")
     p_tailor.add_argument("--resume", type=str, help="Path to master resume YAML")
     p_tailor.add_argument("--output", "-o", type=str, help="Output PDF path")
     p_tailor.set_defaults(func=cmd_tailor)
@@ -251,6 +492,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_ats.add_argument("--resume", "-r", required=True, help="Path to PDF resume")
     p_ats.add_argument("--verbose", "-v", action="store_true", help="Show extracted text")
     p_ats.set_defaults(func=cmd_ats_check)
+
+    # copilot
+    p_copilot = subparsers.add_parser("copilot", help="Run Smart Copilot batch matching and action digest")
+    p_copilot.add_argument("--jobs-file", "-f", type=str, help="Path to jobs YAML (default: config/jobs.yaml)")
+    p_copilot.add_argument("--min-score", "-m", type=int, default=65, help="Minimum ATS score threshold to generate resume")
+    p_copilot.set_defaults(func=cmd_copilot)
 
     return parser
 
