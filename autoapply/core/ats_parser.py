@@ -76,8 +76,8 @@ def check_ats_compatibility(pdf_path: str) -> dict:
     elif word_count > 1200:
         warnings.append(f"Resume has {word_count} words — consider trimming to 1-2 pages.")
 
-    # Heuristic: detect tables (pipes, tabs, or repeated column-like patterns)
-    has_tables = bool(re.search(r"(\|.*\|)|(\t{2,})", text))
+    # Heuristic: detect true tabular structures (e.g. multi-cell markdown tables with separators or tab-separated columns)
+    has_tables = bool(re.search(r"(\|\s*[-:]+[-|\s:]*\|)|(\t{2,})", text))
     if has_tables:
         warnings.append("Tables detected — some ATS systems struggle with tabular layouts.")
 

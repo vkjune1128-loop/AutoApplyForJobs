@@ -1,96 +1,134 @@
 # ──────────────────────────────────────────────
-# Master Resume — Structured YAML
+# Master Resume — Vikas Kumar
 # ──────────────────────────────────────────────
-# This file contains your complete resume data.
-# AutoApply uses it as the base for AI-powered tailoring.
-# Fill in your real details before running.
-
-name: "Your Name"
-email: "your.email@example.com"
-phone: "+91-XXXXXXXXXX"
-linkedin_url: "https://linkedin.com/in/yourprofile"
-github_url: "https://github.com/yourprofile"
+name: "Vikas Kumar"
+email: "vikas.kumar.11028@gmail.com"
+phone: "+91-8437217012"
+location: "Gurgaon, India"
+linkedin_url: "https://linkedin.com/in/vikaskumar1128"
+github_url: "https://github.com/vikaskumar1128"
 
 summary: >
-  Experienced Java Backend Engineer with 5+ years building scalable
-  microservices and distributed systems. Proficient in Spring Boot,
-  Kubernetes, and event-driven architectures. Passionate about clean
-  code, system design, and delivering high-throughput, low-latency APIs.
+  Results-driven Java Backend Engineer and Assistant Manager with 4+ years of professional
+  experience architecting, developing, and deploying mission-critical distributed systems
+  and enterprise microservices at Samsung SDS. Deep expertise in Java (8, 11, 17), Spring Boot,
+  Spring MVC, JPA/Hibernate, RESTful APIs, SQL Server, and Redis. Proven track record of technical
+  leadership—independently owning and delivering complex core modules, optimizing high-volume
+  data pipelines (cutting latency by 60%), and implementing asynchronous scheme calculation and
+  batch processing engines. Strong advocate for clean architecture, SonarQube code quality, and TDD.
 
-# List your skills in order of proficiency / relevance
 skills:
-  - Java
+  - Java (Core, 8, 11, 17)
   - Spring Boot
-  - Spring Cloud
-  - Microservices
-  - REST APIs
-  - Hibernate / JPA
-  - Apache Kafka
-  - RabbitMQ
-  - PostgreSQL
+  - Spring MVC
+  - Spring Data JPA
+  - Hibernate
+  - RESTful APIs
+  - Microservices Architecture
+  - SQL Server
   - MySQL
   - Redis
-  - MongoDB
+  - AWS S3
+  - Batch Processing
   - Docker
   - Kubernetes
-  - AWS (EC2, S3, RDS, SQS, Lambda)
-  - CI/CD (Jenkins, GitHub Actions)
+  - JUnit
+  - Mockito
+  - SonarQube
+  - Dynatrace
+  - Apache POI
+  - Maven
+  - Jenkins
   - Git
-  - JUnit / Mockito
-  - Elasticsearch
-  - Grafana / Prometheus
-  - Python
-  - SQL
+  - JIRA
+  - Agile/Scrum
   - System Design
-  - Agile / Scrum
+  - Performance Optimization
 
 experience:
-  - company: "TechCorp Solutions"
-    title: "Senior Java Developer"
-    start_date: "Jan 2022"
+  - company: "Samsung SDS"
+    title: "Assistant Manager (Software Engineering)"
+    start_date: "Mar 2024"
     end_date: "Present"
-    location: "Bangalore, India"
+    location: "Gurgaon, India"
     technologies:
       - Java 17
-      - Spring Boot 3
-      - Kubernetes
-      - Kafka
-      - PostgreSQL
+      - Spring Boot
+      - Spring Data JPA
+      - SQL Server
       - Redis
+      - Apache POI
+      - AWS S3
+      - Dynatrace
     bullets:
-      - "Designed and implemented 12 microservices handling 50K RPM with 99.9% uptime"
-      - "Reduced API response times by 40% through Redis caching and query optimization"
-      - "Led migration from monolith to microservices, cutting deployment time from 2 hours to 15 minutes"
-      - "Mentored a team of 4 junior developers through code reviews and architecture sessions"
-      - "Implemented event-driven order processing pipeline using Kafka, processing 1M+ events/day"
+      - "Led the technical architecture and solo implementation of core enterprise modules for Samsung's Incentive Management System (IMS), successfully delivering business-critical scheme calculation engines with 100% on-time deployment."
+      - "Reduced bulk Excel upload and processing time by 60% and eliminated Out-Of-Memory (OOM) errors by re-architecting data ingestion using streaming event-based XML parsing (Apache POI SXSSF) and transactional batch processing."
+      - "Architected and delivered an automated, asynchronous scheme lifecycle workflow orchestrating draft validation, executive approval hierarchies, and dynamic PDF letter generation with scheduled email dispatch, reducing manual operational turnaround by 75%."
+      - "Enhanced concurrent API throughput by 45% and reduced p99 query latency from 1.1s to under 250ms by optimizing complex SQL Server relational schemas, indexing strategies, and introducing distributed Redis caching."
+      - "Enforced engineering excellence across the module lifecycle by establishing SonarQube quality gates, driving peer code reviews, and maintaining 88%+ automated test coverage with JUnit and Mockito."
 
-  - company: "StartupXYZ"
-    title: "Java Developer"
-    start_date: "Jun 2019"
-    end_date: "Dec 2021"
-    location: "Hyderabad, India"
+  - company: "Samsung SDS"
+    title: "Software Engineer"
+    start_date: "Jul 2022"
+    end_date: "Mar 2024"
+    location: "Gurgaon, India"
     technologies:
-      - Java 11
-      - Spring Boot 2
+      - Java 11/17
+      - Spring Boot
+      - Spring MVC
+      - Hibernate
       - MySQL
-      - Docker
-      - AWS
-      - RabbitMQ
+      - AWS S3
+      - Postman
+      - Jenkins
     bullets:
-      - "Built RESTful APIs for e-commerce platform serving 100K+ daily active users"
-      - "Implemented OAuth2 / JWT authentication module reducing security incidents by 80%"
-      - "Optimized database queries and introduced connection pooling, improving throughput by 3x"
-      - "Set up CI/CD pipelines with Jenkins and Docker, automating builds and deployments"
-      - "Wrote comprehensive unit and integration tests achieving 85% code coverage"
+      - "Designed and built scalable, object-oriented RESTful microservices using Java and Spring Boot for Samsung's nationwide retail partner incentive platform."
+      - "Implemented enterprise security standards including token-based authentication and role-based access control (RBAC), securing sensitive financial incentive and payout calculations."
+      - "Integrated cloud storage pipelines with AWS S3 for automated archiving and distribution of scheme approval letters and audit records, handling over 500K+ documents."
+      - "Diagnosed and resolved critical production bottlenecks and database connection timeouts using Dynatrace APM, improving overall system stability to 99.9% uptime."
+      - "Collaborated across cross-functional teams (Product Management, QA, and Business Operations) in an Agile/Scrum cadence to define requirements, execute sprint planning, and conduct code reviews."
+
+  - company: "Samsung SDS"
+    title: "Software Engineer Intern"
+    start_date: "Feb 2022"
+    end_date: "Jun 2022"
+    location: "Gurgaon, India"
+    technologies:
+      - Java 8/11
+      - Spring Boot
+      - JUnit
+      - Mockito
+      - Git
+      - Maven
+    bullets:
+      - "Authored comprehensive unit and integration test suites using JUnit and Mockito for REST APIs, increasing regression test coverage by 25%."
+      - "Gained foundational experience in enterprise software engineering standards, build automation with Maven, and CI/CD workflows in Jenkins."
+
+projects:
+  - name: "Incentive Management System (IMS) – Retail Segment"
+    role: "Module Lead & Core Developer"
+    duration: "Jul 2022 – Present"
+    technologies:
+      - Java 17
+      - Spring Boot
+      - Spring Data JPA
+      - SQL Server
+      - Redis
+      - Apache POI
+      - AWS S3
+      - Dynatrace
+    bullets:
+      - "Spearheaded end-to-end development of the IMS Retail platform managing product sales incentive schemes and financial governance for Samsung's retail partner network."
+      - "Engineered the end-to-end scheme lifecycle engine: automated draft creation, validation rules, executive sign-off workflows, scheduled email delivery, and final financial payout reconciliation."
+      - "Built resilient data processing pipelines handling large-scale Excel scheme letter uploads, partner target calculations, and payout claims with comprehensive audit logging."
 
 education:
-  - institution: "Indian Institute of Technology (IIT)"
+  - institution: "National Institute of Technology, Jalandhar"
     degree: "B.Tech"
     field: "Computer Science and Engineering"
-    year: "2019"
-    gpa: "8.5/10"
+    year: "2018 – 2022"
+    gpa: "7.17 / 10"
 
 certifications:
-  - "AWS Certified Solutions Architect – Associate"
-  - "Oracle Certified Professional: Java SE 11 Developer"
-  - "Kubernetes Certified Application Developer (CKAD)"
+  - "Oracle Certified Java Associate / Professional Standards (Hands-on Java 11/17)"
+  - "Spring Boot Microservices & Cloud-Native Architecture"
