@@ -38,6 +38,7 @@ class ResumeData(BaseModel):
     name: str
     email: str
     phone: str
+    location: str = "Gurgaon, India"
     linkedin_url: str = ""
     github_url: str = ""
     summary: str = ""
@@ -53,6 +54,7 @@ class TailoredResume(BaseModel):
     name: str
     email: str
     phone: str
+    location: str = "Gurgaon, India"
     linkedin_url: str = ""
     github_url: str = ""
     summary: str = ""

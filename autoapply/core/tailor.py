@@ -110,12 +110,33 @@ class ResumeTailor:
             )
         }
 
-        # Prioritize skills that match JD keywords to the top
-        matched_skills = [s for s in resume.skills if any(kw in s.lower() for kw in all_jd_kw)]
+        # 1. Dynamically identify Target Role
+        target_role = "Java Backend Engineer"
+        jd_lower = jd_text.lower()
+        if "kafka" in jd_lower:
+            target_role = "Software Engineer (Java / Kafka)"
+        elif "senior" in jd_lower:
+            target_role = "Senior Java Backend Engineer"
+        elif "microservices" in jd_lower:
+            target_role = "Java Microservices Backend Engineer"
+
+        # 2. Dynamically align Professional Summary
+        top_reqs = [kw for kw in jd_keywords.get("required_skills", []) if kw.lower() in [s.lower() for s in resume.skills]]
+        top_skills_str = ", ".join(top_reqs[:3]) if top_reqs else "Core Java, Spring Boot, and Microservices"
+        tailored_summary = (
+            f"Results-driven {target_role} and Assistant Manager with 4+ years of professional experience "
+            f"architecting, developing, and deploying mission-critical distributed systems and enterprise microservices "
+            f"using {top_skills_str} at Samsung SDS. Deep technical expertise in event-driven streaming, "
+            f"relational/NoSQL database performance tuning, and scalable API design. Proven track record of solo module "
+            f"leadership, reducing bulk data ingestion latency by 60%, and enforcing SonarQube engineering standards."
+        )
+
+        # 3. Prioritize skills that match JD keywords to the very top
+        matched_skills = [s for s in resume.skills if any(kw in s.lower() or s.lower() in kw for kw in all_jd_kw)]
         other_skills = [s for s in resume.skills if s not in matched_skills]
         reordered_skills = matched_skills + other_skills
 
-        # For experience, sort bullets having matching keywords higher
+        # 4. For experience, prioritize bullets with matching keywords
         tailored_experiences = []
         for exp in resume.experience:
             matching_bullets = [
@@ -126,11 +147,27 @@ class ResumeTailor:
             exp_dict["bullets"] = matching_bullets + non_matching
             tailored_experiences.append(exp_dict)
 
+        # 5. Check relocation preference from JD location
+        target_loc = resume.location or "Gurgaon, India"
+        for city in ["bengaluru", "bangalore", "hyderabad", "pune", "mumbai", "noida", "chennai"]:
+            if city in jd_lower and "gurgaon" in target_loc.lower() and "relocation" not in target_loc.lower():
+                target_loc = f"Gurgaon, India (Open to Relocation to {city.capitalize()})"
+                break
+
         data = resume.model_dump()
+        data["summary"] = tailored_summary
         data["skills"] = reordered_skills
         data["experience"] = tailored_experiences
         data["matched_keywords"] = list(all_jd_kw)
-        data["target_role"] = jd_keywords.get("role_keywords", ["Java Backend Engineer"])[0] if jd_keywords.get("role_keywords") else "Java Backend Engineer"
+        data["target_role"] = target_role
+        data["location"] = target_loc
+
+        # BGV-Safe Highlights (Zero fabricated certificates)
+        data["certifications"] = [
+            f"Core Technical Mastery: Java 17, Spring Boot, Microservices, and {top_skills_str}",
+            "Corporate Recognition: Fast-track promotion to Assistant Manager (March 2024) at Samsung SDS for exemplary technical ownership and module delivery",
+            "Engineering Quality: Enforced SonarQube quality gates and 88%+ automated test coverage with JUnit & Mockito",
+        ]
 
         return TailoredResume.model_validate(data)
 

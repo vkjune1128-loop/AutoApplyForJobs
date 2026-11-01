@@ -176,6 +176,7 @@
         <div class="contact-info">
             {{ email }}
             {% if phone %}<span>•</span> {{ phone }}{% endif %}
+            {% if location %}<span>•</span> {{ location }}{% endif %}
             {% if linkedin_url %}<span>•</span> <a href="{{ linkedin_url }}">LinkedIn</a>{% endif %}
             {% if github_url %}<span>•</span> <a href="{{ github_url }}">GitHub</a>{% endif %}
         </div>
