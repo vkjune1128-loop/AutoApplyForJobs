@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Generator
 
@@ -99,7 +99,7 @@ def get_today_count(
     Returns:
         Number of matching applications today.
     """
-    today_start = datetime.combine(date.today(), datetime.min.time())
+    today_start = datetime.combine(date.today(), datetime.min.time(), tzinfo=timezone.utc)
 
     statement = select(func.count()).select_from(Application).where(
         Application.applied_at >= today_start

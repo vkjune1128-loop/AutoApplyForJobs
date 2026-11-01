@@ -418,7 +418,8 @@ def _render_copilot_html(items: list[dict], candidate_name: str, output_path: Pa
         header {{ text-align: center; margin-bottom: 2rem; border-bottom: 1px solid #334155; padding-bottom: 1.5rem; }}
         h1 {{ font-size: 1.8rem; margin: 0 0 0.5rem 0; color: #38bdf8; }}
         p.subtitle {{ color: #94a3b8; margin: 0; }}
-        .job-card {{ background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }}
+        .job-card {{ background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; transition: all 0.2s; }}
+        .job-card.applied {{ border-color: #22c55e; background: #0f291e; opacity: 0.85; }}
         .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }}
         h3 {{ margin: 0 0 0.25rem 0; font-size: 1.2rem; }}
         .company-sub {{ font-size: 0.9rem; color: #94a3b8; }}
@@ -435,10 +436,34 @@ def _render_copilot_html(items: list[dict], candidate_name: str, output_path: Pa
         .btn-pdf:hover {{ background: #047857; }}
         .btn-copy {{ background: #475569; color: #fff; font-size: 0.8rem; margin-top: 0.5rem; }}
         .btn-copy:hover {{ background: #64748b; }}
+        .btn-mark {{ background: #334155; color: #94a3b8; }}
+        .btn-mark:hover {{ background: #475569; color: #fff; }}
         .note-box {{ background: #0f172a; border: 1px dashed #475569; border-radius: 8px; padding: 0.75rem 1rem; margin-top: 1rem; }}
         .note-text {{ margin: 0; font-size: 0.88rem; color: #cbd5e1; font-style: italic; }}
         .skipped-label {{ color: #94a3b8; font-size: 0.85rem; font-style: italic; }}
     </style>
+    <script>
+        function markApplied(cardId, compName) {{
+            const card = document.getElementById(cardId);
+            if (card) {{
+                card.classList.toggle('applied');
+                const isApp = card.classList.contains('applied');
+                localStorage.setItem('applied_' + compName, isApp ? '1' : '0');
+                const btn = card.querySelector('.btn-mark');
+                if (btn) btn.innerText = isApp ? '✓ Applied' : 'Mark as Applied';
+            }}
+        }}
+        window.addEventListener('DOMContentLoaded', () => {{
+            document.querySelectorAll('.job-card').forEach(card => {{
+                const comp = card.getAttribute('data-comp');
+                if (comp && localStorage.getItem('applied_' + comp) === '1') {{
+                    card.classList.add('applied');
+                    const btn = card.querySelector('.btn-mark');
+                    if (btn) btn.innerText = '✓ Applied';
+                }}
+            }});
+        }});
+    </script>
 </head>
 <body>
     <div class="container">
@@ -452,6 +477,167 @@ def _render_copilot_html(items: list[dict], candidate_name: str, output_path: Pa
 </html>"""
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(html, encoding="utf-8")
+
+
+def cmd_morning_run(args: argparse.Namespace) -> None:
+    """Automated daily morning job discovery, filtering, tailoring, and git update."""
+    import subprocess
+    import yaml
+    from datetime import datetime, timezone
+    from autoapply.core.discovery import discover_linkedin_jobs
+    from autoapply.core.tailor import ResumeTailor
+    from autoapply.core.pdf_generator import generate_resume_pdf
+    from autoapply.tracker.db import get_engine, get_session, init_db
+    from autoapply.tracker.models import Job, Application
+    from autoapply.config.schemas import ResumeData
+    from sqlmodel import select
+
+    settings = Settings()
+    min_score = args.min_score or 70
+    max_search_jobs = args.max_jobs or 12
+
+    console.print("[bold cyan]🌅 Starting Morning Automated Job Discovery...[/bold cyan]")
+
+    # 1. Scrape latest jobs posted in past 24 hours
+    discovered_jobs = discover_linkedin_jobs(
+        keywords="Java Spring Boot Kafka",
+        location="Bengaluru, Karnataka, India",
+        posted_within_hours=24,
+        max_jobs=max_search_jobs,
+    )
+
+    if not discovered_jobs:
+        console.print("[yellow]No new jobs found in the past 24 hours.[/yellow]")
+        return
+
+    # 2. Load master resume & DB
+    engine = get_engine(settings.db_path)
+    init_db(engine)
+
+    with open("config/master_resume.yaml") as f:
+        resume = ResumeData.model_validate(yaml.safe_load(f))
+
+    tailor = ResumeTailor(api_key=settings.gemini_api_key)
+
+    new_matches = 0
+    all_digest_items = []
+
+    with get_session(engine) as session:
+        for item in discovered_jobs:
+            url = item["url"]
+            # Deduplicate against existing DB entries
+            existing_job = session.exec(select(Job).where(Job.url == url)).first()
+            if existing_job:
+                logger.info(f"Skipping already tracked job: {item['company']}")
+                continue
+
+            # ATS Score
+            kw = tailor.extract_jd_keywords(item["jd_text"])
+            score_res = tailor.estimate_ats_score(resume, kw)
+            score = score_res["score"]
+
+            name_clean = resume.name.strip().replace(" ", "_")
+            comp_clean = item["company"].strip().replace(" ", "_")
+            role_clean = item["title"].strip().replace(" ", "_").replace("/", "_").replace("-", "_")
+            pdf_filename = f"{name_clean}_{comp_clean}_{role_clean}.pdf"
+            pdf_path = Path(f"data/generated_resumes/{pdf_filename}")
+
+            if score >= min_score:
+                # Tailor & generate PDF
+                tailored = tailor.tailor_resume(resume, item["jd_text"], kw)
+                generate_resume_pdf(tailored.model_dump(), str(pdf_path))
+
+                cover_note = tailor.generate_cover_note(resume, item["jd_text"])
+                pdf_path.with_suffix(".txt").write_text(cover_note, encoding="utf-8")
+
+                # Insert Job & Application
+                job_rec = Job(
+                    platform="linkedin",
+                    title=item["title"],
+                    company=item["company"],
+                    location=item["location"],
+                    url=url,
+                    jd_text=item["jd_text"],
+                )
+                session.add(job_rec)
+                session.commit()
+                session.refresh(job_rec)
+
+                app_rec = Application(
+                    job_id=job_rec.id,
+                    platform="linkedin",
+                    status="ready_to_apply",
+                    tailored_resume_path=str(pdf_path),
+                    ats_score=score,
+                    notes=cover_note,
+                )
+                session.add(app_rec)
+                session.commit()
+                new_matches += 1
+
+                all_digest_items.append({
+                    "id": app_rec.id,
+                    "company": item["company"],
+                    "role": item["title"],
+                    "platform": "linkedin",
+                    "location": item["location"],
+                    "url": url,
+                    "score": score,
+                    "pdf_path": str(pdf_path),
+                    "pdf_name": pdf_filename,
+                    "cover_note": cover_note,
+                    "recommended": True,
+                })
+
+    console.print(f"[bold green]✓ Discovered & tailored {new_matches} high-match jobs (≥{min_score}% ATS)![/bold green]")
+
+    # 3. Update HTML Dashboard
+    dashboard_path = Path("data/copilot_dashboard.html")
+    _render_copilot_html(all_digest_items, resume.name, dashboard_path)
+
+    # 4. Auto Git Commit
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    commit_msg = f"chore(morning-digest): {today_str} automated jobs digest ({new_matches} new matched roles)"
+    try:
+        subprocess.run(["git", "add", "data/"], check=False)
+        res = subprocess.run(["git", "commit", "-m", commit_msg], capture_output=True, text=True)
+        if res.returncode == 0:
+            console.print(f"[green]✓ Git commit created: [dim]{commit_msg}[/dim][/green]")
+        else:
+            console.print("[dim]Git working tree clean (no new files to commit).[/dim]")
+    except Exception as e:
+        logger.warning(f"Git commit failed: {e}")
+
+
+def cmd_mark_applied(args: argparse.Namespace) -> None:
+    """Mark a job application as applied in SQLite DB."""
+    from autoapply.tracker.db import get_engine, get_session
+    from autoapply.tracker.models import Application, Job
+    from sqlmodel import select
+    from datetime import datetime, timezone
+
+    settings = Settings()
+    engine = get_engine(settings.db_path)
+
+    with get_session(engine) as session:
+        if args.id:
+            app = session.get(Application, args.id)
+        elif args.company:
+            statement = select(Application).join(Job).where(Job.company.ilike(f"%{args.company}%"))
+            app = session.exec(statement).first()
+        else:
+            console.print("[red]Provide --id or --company[/red]")
+            return
+
+        if not app:
+            console.print("[red]Application not found in database.[/red]")
+            return
+
+        app.status = "applied"
+        app.applied_at = datetime.now(timezone.utc)
+        session.add(app)
+        session.commit()
+        console.print(f"[bold green]✓ Marked application #{app.id} as APPLIED at {app.applied_at}[/bold green]")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -498,6 +684,18 @@ def build_parser() -> argparse.ArgumentParser:
     p_copilot.add_argument("--jobs-file", "-f", type=str, help="Path to jobs YAML (default: config/jobs.yaml)")
     p_copilot.add_argument("--min-score", "-m", type=int, default=65, help="Minimum ATS score threshold to generate resume")
     p_copilot.set_defaults(func=cmd_copilot)
+
+    # morning-run
+    p_morning = subparsers.add_parser("morning-run", help="Run automated morning job discovery, filtering, and git digest")
+    p_morning.add_argument("--min-score", "-m", type=int, default=70, help="Minimum ATS score threshold (default: 70)")
+    p_morning.add_argument("--max-jobs", type=int, default=10, help="Max jobs to discover and detail (default: 10)")
+    p_morning.set_defaults(func=cmd_morning_run)
+
+    # mark-applied
+    p_applied = subparsers.add_parser("mark-applied", help="Mark a job as applied in tracker database")
+    p_applied.add_argument("--id", type=int, help="Application ID to mark applied")
+    p_applied.add_argument("--company", "-c", type=str, help="Company name to mark applied")
+    p_applied.set_defaults(func=cmd_mark_applied)
 
     return parser
 
