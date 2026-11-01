@@ -1,0 +1,96 @@
+# ──────────────────────────────────────────────
+# Master Resume — Structured YAML
+# ──────────────────────────────────────────────
+# This file contains your complete resume data.
+# AutoApply uses it as the base for AI-powered tailoring.
+# Fill in your real details before running.
+
+name: "Your Name"
+email: "your.email@example.com"
+phone: "+91-XXXXXXXXXX"
+linkedin_url: "https://linkedin.com/in/yourprofile"
+github_url: "https://github.com/yourprofile"
+
+summary: >
+  Experienced Java Backend Engineer with 5+ years building scalable
+  microservices and distributed systems. Proficient in Spring Boot,
+  Kubernetes, and event-driven architectures. Passionate about clean
+  code, system design, and delivering high-throughput, low-latency APIs.
+
+# List your skills in order of proficiency / relevance
+skills:
+  - Java
+  - Spring Boot
+  - Spring Cloud
+  - Microservices
+  - REST APIs
+  - Hibernate / JPA
+  - Apache Kafka
+  - RabbitMQ
+  - PostgreSQL
+  - MySQL
+  - Redis
+  - MongoDB
+  - Docker
+  - Kubernetes
+  - AWS (EC2, S3, RDS, SQS, Lambda)
+  - CI/CD (Jenkins, GitHub Actions)
+  - Git
+  - JUnit / Mockito
+  - Elasticsearch
+  - Grafana / Prometheus
+  - Python
+  - SQL
+  - System Design
+  - Agile / Scrum
+
+experience:
+  - company: "TechCorp Solutions"
+    title: "Senior Java Developer"
+    start_date: "Jan 2022"
+    end_date: "Present"
+    location: "Bangalore, India"
+    technologies:
+      - Java 17
+      - Spring Boot 3
+      - Kubernetes
+      - Kafka
+      - PostgreSQL
+      - Redis
+    bullets:
+      - "Designed and implemented 12 microservices handling 50K RPM with 99.9% uptime"
+      - "Reduced API response times by 40% through Redis caching and query optimization"
+      - "Led migration from monolith to microservices, cutting deployment time from 2 hours to 15 minutes"
+      - "Mentored a team of 4 junior developers through code reviews and architecture sessions"
+      - "Implemented event-driven order processing pipeline using Kafka, processing 1M+ events/day"
+
+  - company: "StartupXYZ"
+    title: "Java Developer"
+    start_date: "Jun 2019"
+    end_date: "Dec 2021"
+    location: "Hyderabad, India"
+    technologies:
+      - Java 11
+      - Spring Boot 2
+      - MySQL
+      - Docker
+      - AWS
+      - RabbitMQ
+    bullets:
+      - "Built RESTful APIs for e-commerce platform serving 100K+ daily active users"
+      - "Implemented OAuth2 / JWT authentication module reducing security incidents by 80%"
+      - "Optimized database queries and introduced connection pooling, improving throughput by 3x"
+      - "Set up CI/CD pipelines with Jenkins and Docker, automating builds and deployments"
+      - "Wrote comprehensive unit and integration tests achieving 85% code coverage"
+
+education:
+  - institution: "Indian Institute of Technology (IIT)"
+    degree: "B.Tech"
+    field: "Computer Science and Engineering"
+    year: "2019"
+    gpa: "8.5/10"
+
+certifications:
+  - "AWS Certified Solutions Architect – Associate"
+  - "Oracle Certified Professional: Java SE 11 Developer"
+  - "Kubernetes Certified Application Developer (CKAD)"

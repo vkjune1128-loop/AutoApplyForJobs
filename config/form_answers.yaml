@@ -1,0 +1,24 @@
+# ──────────────────────────────────────────────
+# Pre-filled Screening Question Answers
+# ──────────────────────────────────────────────
+# These answers are used to auto-fill common screening questions
+# on LinkedIn Easy Apply, Naukri, and other platforms.
+
+years_of_experience:
+  java: 5
+  spring_boot: 4
+  microservices: 3
+  python: 2
+  kubernetes: 2
+  aws: 3
+  docker: 3
+  kafka: 2
+  sql: 5
+
+current_ctc: "12 LPA"
+expected_ctc: "18 LPA"
+notice_period: "30 days"
+phone: "+91-XXXXXXXXXX"
+willing_to_relocate: true
+authorized_to_work: true
+require_sponsorship: false

@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autoapply"
+version = "0.1.0"
+description = "Automated job application system with AI-powered resume tailoring"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+dependencies = [
+    "playwright",
+    "apscheduler>=3.10",
+    "google-genai",
+    "pydantic>=2.0",
+    "pydantic-settings",
+    "weasyprint",
+    "pdfminer.six",
+    "jinja2",
+    "rich",
+    "python-dotenv",
+    "sqlmodel",
+    "pyyaml",
+    "markdownify",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "mypy",
+]
+
+[project.scripts]
+autoapply = "autoapply.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["autoapply*"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

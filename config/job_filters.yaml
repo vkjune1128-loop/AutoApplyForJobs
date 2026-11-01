@@ -1,0 +1,22 @@
+# ──────────────────────────────────────────────
+# Job Search Filters — per platform
+# ──────────────────────────────────────────────
+
+linkedin:
+  keywords: ["Java Developer", "Backend Engineer", "Spring Boot"]
+  locations: ["India", "Bangalore", "Remote"]
+  experience_level: "mid-senior"
+  easy_apply_only: true
+  date_posted: "past_week"
+  blacklisted_companies: []
+
+naukri:
+  keywords: ["Java", "Spring Boot", "Microservices"]
+  locations: ["Bangalore", "Hyderabad", "Remote"]
+  experience_range: "4-8"
+  blacklisted_companies: []
+
+instahyre:
+  keywords: ["Java Backend", "Spring Boot"]
+  locations: ["Bangalore"]
+  blacklisted_companies: []
