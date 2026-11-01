@@ -29,6 +29,7 @@ You are a professional resume writer who tailors resumes to match job descriptio
 
 CRITICAL GUARDRAILS:
 - NEVER fabricate technologies, metrics, or experiences.
+- NEVER add or invent certifications. If the master resume has no certifications, the certifications list MUST be empty [].
 - ONLY reframe, emphasize, and reorder existing content.
 - You may rephrase bullet points to highlight relevant skills.
 - You may reorder skills and experience sections to prioritize JD-relevant items.
@@ -162,12 +163,8 @@ class ResumeTailor:
         data["target_role"] = target_role
         data["location"] = target_loc
 
-        # BGV-Safe Highlights (Zero fabricated certificates)
-        data["certifications"] = [
-            f"Core Technical Mastery: Java 17, Spring Boot, Microservices, and {top_skills_str}",
-            "Corporate Recognition: Fast-track promotion to Assistant Manager (March 2024) at Samsung SDS for exemplary technical ownership and module delivery",
-            "Engineering Quality: Enforced SonarQube quality gates and 88%+ automated test coverage with JUnit & Mockito",
-        ]
+        # Strict BGV Safety: Never invent certifications. Preserve only what user provided in master resume.
+        data["certifications"] = list(resume.certifications) if resume.certifications else []
 
         return TailoredResume.model_validate(data)
 

@@ -129,6 +129,4 @@ education:
     year: "2018 – 2022"
     gpa: "7.17 / 10"
 
-certifications:
-  - "Oracle Certified Java Associate / Professional Standards (Hands-on Java 11/17)"
-  - "Spring Boot Microservices & Cloud-Native Architecture"
+certifications: []

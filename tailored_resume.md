@@ -58,9 +58,3 @@ Results-driven **Java Backend Engineer & Assistant Manager** with 4+ years of ha
 - **National Institute of Technology, Jalandhar (NIT Jalandhar)**  
   *Bachelor of Technology (B.Tech) in Computer Science and Engineering* (July 2018 – May 2022)  
   *CGPA:* 7.17 / 10
-
----
-
-## Certifications & Highlights
-- **Core Java & Spring Boot Standards:** Expert-level proficiency in Core Java, Spring Boot microservices, REST APIs, and multi-threaded systems.
-- **Corporate Recognition:** Fast-tracked and promoted to Assistant Manager in March 2024 at Samsung SDS for exemplary technical ownership, solo module delivery, and architectural performance improvements.
