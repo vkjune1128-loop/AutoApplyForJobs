@@ -62,13 +62,15 @@ class ResumeTailor:
     def _local_keyword_extraction(self, jd_text: str) -> dict:
         """Deterministic keyword extraction fallback when API is slow or offline."""
         logger.info("Using local keyword extraction fallback")
-        tf_res = extract_keywords(jd_text, top_n=20)
-        unigrams = [word.capitalize() for word, _ in tf_res["keywords"]]
-        bigrams = [phrase.title() for phrase, _ in tf_res["bigrams"]]
+        tf_res = extract_keywords(jd_text, top_n=25)
+        tech_terms = [t.title() for t in tf_res.get("tech_terms", [])]
+        other_kw = [word.capitalize() for word, _ in tf_res["keywords"] if word.title() not in tech_terms]
+        all_skills = tech_terms + other_kw
+
         return {
-            "required_skills": unigrams[:6],
-            "preferred_skills": unigrams[6:12],
-            "role_keywords": bigrams[:8],
+            "required_skills": all_skills[:8] if all_skills else ["Java", "Spring Boot", "Microservices"],
+            "preferred_skills": all_skills[8:16] if len(all_skills) > 8 else ["Docker", "Kubernetes", "Kafka"],
+            "role_keywords": [phrase.title() for phrase, _ in tf_res["bigrams"]][:8],
             "action_verbs": ["Led", "Architected", "Engineered", "Optimized", "Designed"],
         }
 
@@ -217,6 +219,7 @@ class ResumeTailor:
             resume_text_parts.extend(exp.technologies)
 
         resume_text = " ".join(resume_text_parts).lower()
+        resume_text_parts_lower = [p.lower() for p in resume_text_parts]
 
         all_keywords = set(
             jd_keywords.get("required_skills", [])
@@ -224,10 +227,31 @@ class ResumeTailor:
             + jd_keywords.get("role_keywords", [])
         )
 
-        matched = [kw for kw in all_keywords if kw.lower() in resume_text]
-        missing = [kw for kw in all_keywords if kw.lower() not in resume_text]
+        matched = []
+        missing = []
+        for kw in all_keywords:
+            kw_clean = kw.lower().strip()
+            # Direct containment
+            if kw_clean in resume_text:
+                matched.append(kw)
+            # Reverse containment (e.g. resume has 'apache kafka', keyword is 'kafka')
+            elif any(kw_clean in part for part in resume_text_parts_lower):
+                matched.append(kw)
+            # Significant token match for compound terms (e.g. 'microservices architecture' -> 'microservices')
+            elif any(w in resume_text for w in kw_clean.split() if len(w) >= 4 and w not in ["with", "from", "data"]):
+                matched.append(kw)
+            else:
+                missing.append(kw)
 
-        score = int((len(matched) / max(len(all_keywords), 1)) * 100) if all_keywords else 85
+        # Weight required skills heavier than preferred/role keywords
+        req_skills = set(jd_keywords.get("required_skills", []))
+        req_matched = [k for k in req_skills if k in matched]
+        req_ratio = len(req_matched) / max(len(req_skills), 1)
+
+        total_ratio = len(matched) / max(len(all_keywords), 1)
+        # Combined score: 60% weight on required skills, 40% on overall keywords
+        score = int((0.6 * req_ratio + 0.4 * total_ratio) * 100)
+        score = min(max(score, 30), 98)
 
         return {
             "score": score,
