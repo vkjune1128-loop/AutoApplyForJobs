@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vikas Kumar — Resume</title>
+    <style>
+        /* ATS-friendly resume template — single column, no tables, no images, system fonts */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 10.5pt;
+            line-height: 1.45;
+            color: #222;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 0.5in 0.6in;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 12pt;
+            border-bottom: 1.5pt solid #333;
+            padding-bottom: 8pt;
+        }
+
+        .header h1 {
+            font-size: 18pt;
+            font-weight: 700;
+            letter-spacing: 0.5pt;
+            margin-bottom: 4pt;
+            color: #111;
+        }
+
+        .contact-info {
+            font-size: 9.5pt;
+            color: #444;
+        }
+
+        .contact-info a {
+            color: #444;
+            text-decoration: none;
+        }
+
+        .contact-info span {
+            margin: 0 4pt;
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 11.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8pt;
+            color: #111;
+            border-bottom: 0.75pt solid #999;
+            padding-bottom: 2pt;
+            margin-top: 14pt;
+            margin-bottom: 6pt;
+        }
+
+        /* Summary */
+        .summary {
+            margin-bottom: 4pt;
+            font-size: 10pt;
+        }
+
+        /* Skills */
+        .skills {
+            margin-bottom: 4pt;
+            font-size: 10pt;
+        }
+
+        /* Experience */
+        .experience-item {
+            margin-bottom: 10pt;
+        }
+
+        .experience-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 2pt;
+        }
+
+        .experience-header .title-company {
+            font-weight: 600;
+            font-size: 10.5pt;
+        }
+
+        .experience-header .dates {
+            font-size: 9.5pt;
+            color: #555;
+            white-space: nowrap;
+        }
+
+        .experience-location {
+            font-size: 9.5pt;
+            color: #555;
+            margin-bottom: 3pt;
+        }
+
+        .experience-technologies {
+            font-size: 9pt;
+            color: #666;
+            margin-bottom: 3pt;
+            font-style: italic;
+        }
+
+        ul.bullets {
+            list-style: disc;
+            margin-left: 16pt;
+            margin-bottom: 4pt;
+        }
+
+        ul.bullets li {
+            font-size: 10pt;
+            margin-bottom: 2pt;
+        }
+
+        /* Education */
+        .education-item {
+            margin-bottom: 6pt;
+        }
+
+        .education-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .education-header .degree {
+            font-weight: 600;
+            font-size: 10.5pt;
+        }
+
+        .education-header .year {
+            font-size: 9.5pt;
+            color: #555;
+        }
+
+        .education-institution {
+            font-size: 9.5pt;
+            color: #555;
+        }
+
+        /* Certifications */
+        ul.certifications {
+            list-style: disc;
+            margin-left: 16pt;
+        }
+
+        ul.certifications li {
+            font-size: 10pt;
+            margin-bottom: 2pt;
+        }
+
+        /* Print settings */
+        @media print {
+            body {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>Vikas Kumar</h1>
+        <div class="contact-info">
+            vikas.kumar.11028@gmail.com
+            <span>•</span> +91-8437217012
+            <span>•</span> <a href="https://linkedin.com/in/vikaskumar1128">LinkedIn</a>
+            <span>•</span> <a href="https://github.com/vikaskumar1128">GitHub</a>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    
+    <h2>Summary</h2>
+    <p class="summary">Results-driven Java Backend Engineer &amp; Assistant Manager with 4+ years of hands-on experience designing, developing, and scaling enterprise-grade Microservices and distributed systems at Samsung SDS. Deep technical expertise in Core Java (8/11/17), Spring Boot, Apache Kafka, Spring Data JPA/Hibernate, RESTful APIs, SQL Server, and Redis. Proven track record of end-to-end technical leadership—spearheading core backend modules, implementing asynchronous event-driven messaging pipelines using Kafka, cutting high-volume batch data ingestion latency by 60%, and tuning p99 database query performance from 1.1s to &lt;250ms. Passionate about clean code, robust JUnit/Mockito test automation, and Agile delivery.</p>
+    
+
+    <!-- Skills -->
+    
+    <h2>Technical Skills</h2>
+    <p class="skills">Core Java (8, 11, 17), Spring Boot, Microservices Architecture, Apache Kafka, Asynchronous Messaging, RESTful APIs, Spring Data JPA, Hibernate, SQL Server, MySQL, Redis (Distributed Caching), AWS S3, Docker, Kubernetes, JUnit, Mockito, SonarQube, Git, Maven, Jenkins (CI/CD), Agile/Scrum, Performance Optimization</p>
+    
+
+    <!-- Experience -->
+    
+    <h2>Experience</h2>
+    
+    <div class="experience-item">
+        <div class="experience-header">
+            <span class="title-company">Assistant Manager (Software Engineering) — Samsung SDS</span>
+            <span class="dates">Mar 2024 – Present</span>
+        </div>
+        
+        <div class="experience-location">Gurgaon, India</div>
+        
+        
+        <div class="experience-technologies">Java 17, Spring Boot, Apache Kafka, Spring Data JPA, SQL Server, Redis, Apache POI, AWS S3, Dynatrace</div>
+        
+        
+        <ul class="bullets">
+            
+            <li>Architected and led the solo development of mission-critical core modules for Samsung&#39;s Incentive Management System (IMS), successfully deploying scalable Spring Boot microservices and Kafka event streams with 100% on-time delivery.</li>
+            
+            <li>Designed and implemented an automated, asynchronous event-driven workflow orchestrating draft validation, executive approval hierarchies, and dynamic PDF letter generation with scheduled dispatch, reducing manual operational turnaround by 75%.</li>
+            
+            <li>Re-engineered bulk Excel file upload and data ingestion using streaming event-based XML parsing (Apache POI SXSSF) and transactional batch processing, reducing processing latency by 60% and completely eliminating Out-Of-Memory (OOM) exceptions.</li>
+            
+            <li>Enhanced concurrent RESTful API throughput by 45% and reduced p99 query response time from 1.1s to under 250ms by optimizing complex SQL Server relational schemas, crafting compound indexes, and integrating distributed Redis caching.</li>
+            
+            <li>Enforced rigorous software quality gates by integrating SonarQube checks into the CI/CD pipeline, conducting peer code reviews, and maintaining 88%+ automated test coverage using JUnit and Mockito.</li>
+            
+        </ul>
+        
+    </div>
+    
+    <div class="experience-item">
+        <div class="experience-header">
+            <span class="title-company">Software Engineer — Samsung SDS</span>
+            <span class="dates">Jul 2022 – Mar 2024</span>
+        </div>
+        
+        <div class="experience-location">Gurgaon, India</div>
+        
+        
+        <div class="experience-technologies">Java 11/17, Spring Boot, Spring MVC, Hibernate, MySQL, AWS S3, Jenkins, Git</div>
+        
+        
+        <ul class="bullets">
+            
+            <li>Designed and built robust, object-oriented RESTful microservices using Java 17 and Spring Boot for Samsung&#39;s nationwide retail partner ecosystem, ensuring seamless integration across multi-tenant distributed services.</li>
+            
+            <li>Implemented enterprise token-based authentication and role-based access control (RBAC), securing sensitive financial incentive calculations and partner transaction APIs.</li>
+            
+            <li>Integrated cloud storage pipelines via AWS S3 for compliant, automated archiving and distribution of scheme agreement letters and audit records, handling over 500,000+ documents.</li>
+            
+            <li>Diagnosed and resolved critical production bottlenecks, thread contention, and connection pool timeouts using Dynatrace APM, maintaining high service availability at 99.9% uptime.</li>
+            
+            <li>Partnered with Product Managers, QA, and cross-functional engineering teams in bi-weekly Agile/Scrum sprints to translate complex business incentive logic into high-performance technical solutions.</li>
+            
+        </ul>
+        
+    </div>
+    
+    <div class="experience-item">
+        <div class="experience-header">
+            <span class="title-company">Software Engineer Intern — Samsung SDS</span>
+            <span class="dates">Feb 2022 – Jun 2022</span>
+        </div>
+        
+        <div class="experience-location">Gurgaon, India</div>
+        
+        
+        <div class="experience-technologies">Java 8/11, Spring Boot, JUnit, Mockito, Git, Maven</div>
+        
+        
+        <ul class="bullets">
+            
+            <li>Authored over 150+ automated unit and integration tests using JUnit and Mockito for core REST APIs, increasing sprint regression test coverage by 25%.</li>
+            
+            <li>Adopted enterprise Java development standards, build management using Maven, and automated continuous integration with Jenkins and Git.</li>
+            
+        </ul>
+        
+    </div>
+    
+    
+
+    <!-- Education -->
+    
+    <h2>Education</h2>
+    
+    <div class="education-item">
+        <div class="education-header">
+            <span class="degree">B.Tech in Computer Science and Engineering</span>
+            <span class="year">2018 – 2022</span>
+        </div>
+        <div class="education-institution">
+            National Institute of Technology, Jalandhar — GPA: 7.17 / 10
+        </div>
+    </div>
+    
+    
+
+    <!-- Certifications -->
+    
+    <h2>Certifications</h2>
+    <ul class="certifications">
+        
+        <li>Expert-level proficiency in Core Java (8/11/17), Spring Boot Microservices, Apache Kafka, and RESTful APIs</li>
+        
+        <li>Fast-track promotion to Assistant Manager (March 2024) at Samsung SDS for exemplary technical ownership and module delivery</li>
+        
+    </ul>
+    
+
+</body>
+</html>

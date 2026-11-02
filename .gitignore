@@ -30,9 +30,16 @@ Thumbs.db
 
 # Project-specific
 data/browser_state/
-data/generated_resumes/
-data/autoapply.db
+# Generated resumes and tracker database (tracked for GitHub digest and sync)
+!data/generated_resumes/
+!data/generated_resumes/*
+!data/autoapply.db
+!data/copilot_dashboard.html
 *.pdf
+!data/generated_resumes/*.pdf
+!master_resume.pdf
+!tailored_resume.pdf
+!Vikas_Kumar_*.pdf
 
 # Testing
 .pytest_cache/
