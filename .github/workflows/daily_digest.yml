@@ -1,0 +1,58 @@
+name: Daily AutoApply Morning Digest
+
+on:
+  schedule:
+    # Runs at 02:30 UTC every day (8:00 AM IST)
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+    # Allows manual trigger anytime from GitHub Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  morning-digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install system dependencies for WeasyPrint (PDF engine)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libpangocairo-1.0-0
+
+      - name: Install AutoApply package
+        run: |
+          pip install --upgrade pip
+          pip install -e .
+
+      - name: Install Playwright Chromium (guest scraper)
+        run: |
+          playwright install chromium
+
+      - name: Run Morning Discovery & Resume Tailoring
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python -m autoapply.cli morning-run --min-score 70 --max-jobs 10
+
+      - name: Commit and push daily digest & tailored resumes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "AutoApply Bot"
+          git add data/ DAILY_DIGEST.md
+          if git diff --staged --quiet; then
+            echo "No new jobs discovered today. Nothing to commit."
+          else
+            git commit -m "chore(morning-digest): $(date -u +'%Y-%m-%d') daily job digest & resumes [skip ci]"
+            git push origin main
+          fi
