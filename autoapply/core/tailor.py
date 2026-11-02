@@ -240,6 +240,15 @@ class ResumeTailor:
                 f"I would love to explore how my background in distributed architecture can add value to your team."
             )
 
+    def generate_referral_note(self, resume: ResumeData, company: str, role: str) -> str:
+        """Generate a crisp internal referral pitch for current employees on Grapevine / LinkedIn."""
+        return (
+            f"Hi! Hope you're doing well. I noticed the {role} opening at {company} and would love to be considered. "
+            f"I am currently Assistant Manager at Samsung SDS with 4+ years of experience architecting Core Java, Spring Boot, "
+            f"and Kafka microservices processing 10M+ daily transactions. Would you be open to submitting an internal referral for me? "
+            f"I can share my resume and relevant details right away. Thanks in advance!"
+        )
+
     def estimate_ats_score(self, resume: ResumeData, jd_keywords: dict) -> dict:
         """Estimate ATS match score between resume and JD keywords."""
         logger.info("Estimating ATS score")
