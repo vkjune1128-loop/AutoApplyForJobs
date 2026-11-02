@@ -115,5 +115,136 @@ def discover_linkedin_jobs(
         finally:
             browser.close()
 
-    logger.info(f"Discovered total of {len(discovered)} detailed job postings")
+    logger.info(f"Discovered total of {len(discovered)} detailed job postings from LinkedIn")
     return discovered
+
+
+def discover_instahyre_jobs(
+    locations: list[str] | None = None,
+    keywords: list[str] | None = None,
+    max_jobs: int = 8,
+) -> list[dict]:
+    """Discover curated product company and startup tech jobs from Instahyre's public API.
+
+    No browser overhead or login required. Returns clean, structured job metadata.
+    """
+    import json
+    import urllib.request
+
+    if locations is None:
+        locations = ["Bangalore", "Gurgaon"]
+    if keywords is None:
+        keywords = ["java", "spring", "kafka", "microservices", "distributed", "backend"]
+
+    discovered: list[dict] = []
+    seen_urls: set[str] = set()
+
+    for loc in locations:
+        if len(discovered) >= max_jobs:
+            break
+        url = f"https://www.instahyre.com/api/v1/job_search?job_functions=10&location={loc}"
+        try:
+            logger.info(f"Querying Instahyre API for backend roles in '{loc}'")
+            req = urllib.request.Request(
+                url,
+                headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"},
+            )
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                objects = data.get("objects", [])
+                for obj in objects:
+                    if len(discovered) >= max_jobs:
+                        break
+                    pub_url = obj.get("public_url") or ""
+                    if not pub_url or pub_url in seen_urls:
+                        continue
+
+                    obj_keywords = [k.lower() for k in obj.get("keywords", [])]
+                    title = obj.get("title", "")
+                    title_lower = title.lower()
+
+                    # Exclude explicitly non-Java / non-backend roles
+                    excluded_titles = ["python", "react", "frontend", "flutter", "ios", "android", "qa", "tester", "data scientist", "devops"]
+                    if any(bad in title_lower for bad in excluded_titles) and not any(j in obj_keywords for j in ["java", "spring boot", "kafka"]):
+                        continue
+
+                    # Require Java / Spring / Kafka / Microservices stack relevance
+                    has_core_skill = any(kw in obj_keywords for kw in ["java", "spring", "spring boot", "kafka", "microservices", "distributed systems"])
+                    if not (has_core_skill or ("java" in title_lower)):
+                        continue
+
+                    company = obj.get("employer", {}).get("company_name", "Tech Company")
+                    note = obj.get("employer", {}).get("instahyre_note", "")
+                    skills_list = obj.get("keywords", [])
+                    job_locations = obj.get("locations", loc)
+
+                    jd_text = (
+                        f"Company: {company}\n"
+                        f"About Company: {note}\n"
+                        f"Role: {title}\n"
+                        f"Location: {job_locations}\n"
+                        f"Required Tech Stack & Skills: {', '.join(skills_list)}\n"
+                        f"Core Responsibilities: Design, develop, and maintain high-throughput distributed systems, "
+                        f"REST APIs, and backend microservices using {', '.join(skills_list[:6])}."
+                    )
+
+                    seen_urls.add(pub_url)
+                    discovered.append({
+                        "title": title,
+                        "company": company,
+                        "location": job_locations,
+                        "url": pub_url,
+                        "jd_text": jd_text,
+                        "platform": "instahyre",
+                    })
+                    logger.info(f"✓ Found Instahyre role: {title} @ {company} ({job_locations})")
+        except Exception as e:
+            logger.warning(f"Instahyre search failed for '{loc}': {e}")
+            continue
+
+    logger.info(f"Instahyre discovery found {len(discovered)} relevant backend roles")
+    return discovered
+
+
+def discover_multi_source_jobs(
+    keywords: str = "Java Spring Boot Kafka",
+    location: str = "Bengaluru, Karnataka, India",
+    posted_within_hours: int = 24,
+    max_total_jobs: int = 12,
+) -> list[dict]:
+    """Unified multi-source discovery engine across LinkedIn and Instahyre."""
+    all_discovered: list[dict] = []
+    seen_urls: set[str] = set()
+
+    max_per_platform = max(3, max_total_jobs // 2)
+
+    # 1. Discover via Instahyre (Fast API, high-growth product companies & unicorns)
+    try:
+        insta_jobs = discover_instahyre_jobs(
+            locations=["Bangalore", "Gurgaon"],
+            max_jobs=max_per_platform,
+        )
+        for j in insta_jobs:
+            if j["url"] not in seen_urls:
+                seen_urls.add(j["url"])
+                all_discovered.append(j)
+    except Exception as e:
+        logger.warning(f"Instahyre multi-source discovery failed: {e}")
+
+    # 2. Discover via LinkedIn (Past 24h public search for GCCs & enterprise tech)
+    try:
+        li_jobs = discover_linkedin_jobs(
+            keywords=keywords,
+            location=location,
+            posted_within_hours=posted_within_hours,
+            max_jobs=max_per_platform,
+        )
+        for j in li_jobs:
+            if j["url"] not in seen_urls:
+                seen_urls.add(j["url"])
+                all_discovered.append(j)
+    except Exception as e:
+        logger.warning(f"LinkedIn multi-source discovery failed: {e}")
+
+    logger.info(f"Unified discovery produced {len(all_discovered)} roles across platforms")
+    return all_discovered

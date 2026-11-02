@@ -561,7 +561,7 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
     import subprocess
     import yaml
     from datetime import datetime, timezone
-    from autoapply.core.discovery import discover_linkedin_jobs
+    from autoapply.core.discovery import discover_multi_source_jobs
     from autoapply.core.tailor import ResumeTailor
     from autoapply.core.pdf_generator import generate_resume_pdf
     from autoapply.tracker.db import get_engine, get_session, init_db
@@ -573,14 +573,14 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
     min_score = args.min_score or 70
     max_search_jobs = args.max_jobs or 12
 
-    console.print("[bold cyan]🌅 Starting Morning Automated Job Discovery...[/bold cyan]")
+    console.print("[bold cyan]🌅 Starting Multi-Source Morning Job Discovery (LinkedIn + Instahyre)...[/bold cyan]")
 
-    # 1. Scrape latest jobs posted in past 24 hours
-    discovered_jobs = discover_linkedin_jobs(
+    # 1. Scrape latest jobs across multiple top Indian hiring channels
+    discovered_jobs = discover_multi_source_jobs(
         keywords="Java Spring Boot Kafka",
         location="Bengaluru, Karnataka, India",
         posted_within_hours=24,
-        max_jobs=max_search_jobs,
+        max_total_jobs=max_search_jobs,
     )
 
     if not discovered_jobs:
@@ -628,8 +628,9 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
                 pdf_path.with_suffix(".txt").write_text(cover_note, encoding="utf-8")
 
                 # Insert Job & Application
+                job_platform = item.get("platform", "linkedin")
                 job_rec = Job(
-                    platform="linkedin",
+                    platform=job_platform,
                     title=item["title"],
                     company=item["company"],
                     location=item["location"],
@@ -642,7 +643,7 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
 
                 app_rec = Application(
                     job_id=job_rec.id,
-                    platform="linkedin",
+                    platform=job_platform,
                     status="ready_to_apply",
                     tailored_resume_path=str(pdf_path),
                     ats_score=score,
