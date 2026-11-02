@@ -483,7 +483,12 @@ def _render_copilot_html(items: list[dict], candidate_name: str, output_path: Pa
     output_path.write_text(html, encoding="utf-8")
 
 
-def _render_daily_digest_markdown(items: list[dict], candidate_name: str, output_path: Path) -> None:
+def _render_daily_digest_markdown(
+    items: list[dict],
+    candidate_name: str,
+    output_path: Path,
+    applied_items: list[dict] | None = None,
+) -> None:
     """Render a clean Markdown summary for GitHub viewing."""
     from datetime import datetime, timezone
 
@@ -495,25 +500,52 @@ def _render_daily_digest_markdown(items: list[dict], candidate_name: str, output
         f"**Candidate:** {candidate_name} | **Target Profile:** Assistant Manager / Java Backend (Spring Boot, Kafka, Microservices)",
         f"**Last Sync:** `{now_str}`",
         "",
-        "| Company | Role | Location | ATS Match | Apply Link | Tailored Resume | Recruiter Outreach Note |",
-        "|:---|:---|:---|:---:|:---:|:---:|:---|",
+        "## 🎯 Action Queue (Ready to Apply)",
+        "",
     ]
 
-    for it in items:
-        company = it.get("company", "Company")
-        role = it.get("role", "Software Engineer")
-        loc = it.get("location") or "Bengaluru / Gurgaon"
-        score = it.get("score", 0)
-        url = it.get("url", "#")
-        pdf_name = it.get("pdf_name")
-        pdf_link = f"[📄 Download PDF](data/generated_resumes/{pdf_name})" if pdf_name else "N/A"
-        note = it.get("cover_note", "").replace("\n", " ").strip()
-        note_short = f"<details><summary>View Note</summary>{note}</details>" if note else "-"
+    if items:
+        lines.extend([
+            "| Company | Role | Location | ATS Match | Apply Link | Tailored Resume | Recruiter Outreach Note |",
+            "|:---|:---|:---|:---:|:---:|:---:|:---|",
+        ])
+        for it in items:
+            company = it.get("company", "Company")
+            role = it.get("role", "Software Engineer")
+            loc = it.get("location") or "Bengaluru / Gurgaon"
+            score = it.get("score", 0)
+            url = it.get("url", "#")
+            pdf_name = it.get("pdf_name")
+            pdf_link = f"[📄 Download PDF](data/generated_resumes/{pdf_name})" if pdf_name else "N/A"
+            note = it.get("cover_note", "").replace("\n", " ").strip()
+            note_short = f"<details><summary>View Note</summary>{note}</details>" if note else "-"
 
-        apply_btn = f"[🚀 Apply Now]({url})" if url != "#" else "Direct Search"
-        lines.append(
-            f"| **{company}** | {role} | {loc} | **{score}%** | {apply_btn} | {pdf_link} | {note_short} |"
-        )
+            apply_btn = f"[🚀 Apply Now]({url})" if url != "#" else "Direct Search"
+            lines.append(
+                f"| **{company}** | {role} | {loc} | **{score}%** | {apply_btn} | {pdf_link} | {note_short} |"
+            )
+    else:
+        lines.append("> 🎉 **All caught up!** You have applied to all recommended roles in the queue. The next automated morning run will discover and tailor fresh roles.")
+
+    if applied_items:
+        lines.extend([
+            "",
+            f"## ✅ Submitted Applications History ({len(applied_items)} Total)",
+            "",
+            "| Company | Role | Platform | ATS Match | Applied Date | Tailored Resume |",
+            "|:---|:---|:---:|:---:|:---|:---:|",
+        ])
+        for it in applied_items:
+            comp = it.get("company", "Company")
+            role = it.get("role", "Software Engineer")
+            plat = it.get("platform", "web").upper()
+            score = it.get("score", 0)
+            applied_at = it.get("applied_at", "-")
+            pdf_name = it.get("pdf_name")
+            pdf_link = f"[📄 PDF](data/generated_resumes/{pdf_name})" if pdf_name else "-"
+            lines.append(
+                f"| **{comp}** | {role} | {plat} | **{score}%** | `{applied_at}` | {pdf_link} |"
+            )
 
     lines.append("")
     lines.append("---")
@@ -661,11 +693,34 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
                 "recommended": True,
             })
 
+        # Applied applications history
+        applied_stmt = select(Application, Job).join(Job).where(Application.status == "applied").order_by(Application.applied_at.desc())
+        all_applied = session.exec(applied_stmt).all()
+        applied_digest_items = []
+        seen_applied = set()
+        for app_rec, job_rec in all_applied:
+            if job_rec.url in seen_applied:
+                continue
+            seen_applied.add(job_rec.url)
+            pdf_p = Path(app_rec.tailored_resume_path) if app_rec.tailored_resume_path else None
+            applied_str = app_rec.applied_at.strftime("%Y-%m-%d %H:%M UTC") if app_rec.applied_at else "-"
+            applied_digest_items.append({
+                "id": app_rec.id,
+                "company": job_rec.company,
+                "role": job_rec.title,
+                "platform": job_rec.platform,
+                "location": job_rec.location,
+                "score": app_rec.ats_score,
+                "pdf_path": str(pdf_p) if pdf_p else None,
+                "pdf_name": pdf_p.name if pdf_p else None,
+                "applied_at": applied_str,
+            })
+
     dashboard_path = Path("data/copilot_dashboard.html")
     _render_copilot_html(active_digest_items, resume.name, dashboard_path)
 
     digest_md_path = Path("DAILY_DIGEST.md")
-    _render_daily_digest_markdown(active_digest_items, resume.name, digest_md_path)
+    _render_daily_digest_markdown(active_digest_items, resume.name, digest_md_path, applied_items=applied_digest_items)
     console.print(f"[bold green]✓ GitHub Digest Markdown generated at:[/bold green] [underline]{digest_md_path}[/underline]")
 
     # 4. Auto Git Commit and Push
