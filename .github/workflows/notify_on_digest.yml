@@ -1,0 +1,79 @@
+name: Daily Digest Mobile Notifier
+
+on:
+  push:
+    paths:
+      - 'DAILY_DIGEST.md'
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  notify-mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check digest and notify mobile via GitHub Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('DAILY_DIGEST.md')) {
+              console.log('No DAILY_DIGEST.md found.');
+              return;
+            }
+
+            const digestContent = fs.readFileSync('DAILY_DIGEST.md', 'utf8');
+
+            // Do not notify if there are no new jobs in the action queue
+            if (digestContent.includes('All caught up!') || !digestContent.includes('|:---|:---|')) {
+              console.log('Action queue is all caught up. No notification needed.');
+              return;
+            }
+
+            const username = 'vkjune1128-loop';
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const issueTitle = `🌅 Daily Action Queue — ${todayStr} (Fresh Roles Ready)`;
+
+            const issueBody = `Hey @${username}! 🌅 **Your daily tailored jobs are ready.**\n\n` +
+              `Tap **[🚀 Apply Now]** on the roles below, upload your tailored PDFs, and tap **Close Issue** when you're done!\n\n` +
+              `> 💡 *Closing this issue automatically syncs your applications into the SQLite database on your Mac!*\n\n` +
+              `---\n\n` +
+              digestContent;
+
+            // Check if there is an existing open daily-digest issue
+            const openIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'daily-digest'
+            });
+
+            if (openIssues.data.length > 0) {
+              const existingNum = openIssues.data[0].number;
+              console.log(`Updating existing open issue #${existingNum}`);
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingNum,
+                title: issueTitle,
+                body: issueBody
+              });
+              console.log(`Successfully updated Issue #${existingNum}`);
+            } else {
+              console.log('Creating new daily-digest issue...');
+              const newIssue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['daily-digest', 'ready-to-apply']
+              });
+              console.log(`Successfully created Issue #${newIssue.data.number}`);
+            }
