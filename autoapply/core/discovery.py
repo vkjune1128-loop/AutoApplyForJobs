@@ -212,11 +212,13 @@ def discover_multi_source_jobs(
     posted_within_hours: int = 24,
     max_total_jobs: int = 12,
 ) -> list[dict]:
-    """Unified multi-source discovery engine across LinkedIn and Instahyre."""
+    """Unified multi-source discovery engine across Instahyre, Direct ATS (Lever/Greenhouse), and LinkedIn."""
+    from autoapply.core.ats_feeds import discover_direct_ats_jobs
+
     all_discovered: list[dict] = []
     seen_urls: set[str] = set()
 
-    max_per_platform = max(3, max_total_jobs // 2)
+    max_per_platform = max(2, max_total_jobs // 3)
 
     # 1. Discover via Instahyre (Fast API, high-growth product companies & unicorns)
     try:
@@ -231,18 +233,32 @@ def discover_multi_source_jobs(
     except Exception as e:
         logger.warning(f"Instahyre multi-source discovery failed: {e}")
 
-    # 2. Discover via LinkedIn (Past 24h public search for GCCs & enterprise tech)
+    # 2. Discover via Direct ATS Feeds (Lever & Greenhouse for Meesho, CRED, InMobi)
     try:
-        li_jobs = discover_linkedin_jobs(
-            keywords=keywords,
-            location=location,
-            posted_within_hours=posted_within_hours,
+        ats_jobs = discover_direct_ats_jobs(
             max_jobs=max_per_platform,
         )
-        for j in li_jobs:
+        for j in ats_jobs:
             if j["url"] not in seen_urls:
                 seen_urls.add(j["url"])
                 all_discovered.append(j)
+    except Exception as e:
+        logger.warning(f"Direct ATS feed multi-source discovery failed: {e}")
+
+    # 3. Discover via LinkedIn (Past 24h public search for GCCs & enterprise tech)
+    try:
+        remaining_quota = max_total_jobs - len(all_discovered)
+        if remaining_quota > 0:
+            li_jobs = discover_linkedin_jobs(
+                keywords=keywords,
+                location=location,
+                posted_within_hours=posted_within_hours,
+                max_jobs=remaining_quota,
+            )
+            for j in li_jobs:
+                if j["url"] not in seen_urls:
+                    seen_urls.add(j["url"])
+                    all_discovered.append(j)
     except Exception as e:
         logger.warning(f"LinkedIn multi-source discovery failed: {e}")
 

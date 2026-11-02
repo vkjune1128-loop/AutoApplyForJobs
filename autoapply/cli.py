@@ -309,10 +309,11 @@ def cmd_copilot(args: argparse.Namespace) -> None:
             pdf_path.parent.mkdir(parents=True, exist_ok=True)
             generate_resume_pdf(tailored.model_dump(), str(pdf_path))
 
-            # Cover note
+            # Cover note & referral pitch
             cover_note = tailor.generate_cover_note(resume, jd)
+            referral_note = tailor.generate_referral_note(resume, company, role)
             note_file = pdf_path.with_suffix(".txt")
-            note_file.write_text(cover_note, encoding="utf-8")
+            note_file.write_text(f"--- Recruiter Note ---\n{cover_note}\n\n--- Referral Pitch ---\n{referral_note}\n", encoding="utf-8")
 
             # Log to DB
             with get_session(engine) as session:
@@ -349,6 +350,7 @@ def cmd_copilot(args: argparse.Namespace) -> None:
             score_badge = f"[yellow]{score}% (Low)[/yellow]"
             action_text = "[dim]Skipped (< threshold)[/dim]"
             cover_note = ""
+            referral_note = ""
 
         table.add_row(company, role, platform.upper(), score_badge, action_text)
 
@@ -362,198 +364,47 @@ def cmd_copilot(args: argparse.Namespace) -> None:
             "pdf_path": str(pdf_path) if score >= min_score else None,
             "pdf_name": pdf_filename if score >= min_score else None,
             "cover_note": cover_note,
+            "referral_note": referral_note,
             "recommended": score >= min_score,
         })
 
     console.print(table)
 
+    # Fetch applied history for complete GitHub digest
+    from autoapply.presentation.digest import render_copilot_html, render_daily_digest_markdown
+    from sqlmodel import select
+
+    applied_items = []
+    with get_session(engine) as session:
+        applied_stmt = select(Application, Job).join(Job).where(Application.status == "applied").order_by(Application.applied_at.desc())
+        all_applied = session.exec(applied_stmt).all()
+        seen_applied = set()
+        for app_rec, job_rec in all_applied:
+            if job_rec.url in seen_applied:
+                continue
+            seen_applied.add(job_rec.url)
+            pdf_p = Path(app_rec.tailored_resume_path) if app_rec.tailored_resume_path else None
+            applied_str = app_rec.applied_at.strftime("%Y-%m-%d %H:%M UTC") if app_rec.applied_at else "-"
+            applied_items.append({
+                "id": app_rec.id,
+                "company": job_rec.company,
+                "role": job_rec.title,
+                "platform": job_rec.platform,
+                "location": job_rec.location,
+                "score": app_rec.ats_score,
+                "pdf_path": str(pdf_p) if pdf_p else None,
+                "pdf_name": pdf_p.name if pdf_p else None,
+                "applied_at": applied_str,
+            })
+
     # Generate HTML Action Digest Dashboard & Markdown Summary
     digest_html_path = Path("data/copilot_dashboard.html")
-    _render_copilot_html(digest_items, resume.name, digest_html_path)
+    render_copilot_html(digest_items, resume.name, digest_html_path)
     console.print(f"\n[bold green]✓ Action Dashboard generated at:[/bold green] [underline]{digest_html_path}[/underline]")
 
     digest_md_path = Path("DAILY_DIGEST.md")
-    _render_daily_digest_markdown(digest_items, resume.name, digest_md_path)
+    render_daily_digest_markdown(digest_items, resume.name, digest_md_path, applied_items=applied_items)
     console.print(f"[bold green]✓ GitHub Digest Markdown generated at:[/bold green] [underline]{digest_md_path}[/underline]")
-
-
-def _render_copilot_html(items: list[dict], candidate_name: str, output_path: Path) -> None:
-    """Render an interactive HTML action dashboard for Smart Copilot."""
-    cards_html = []
-    for it in items:
-        badge_class = "badge-high" if it["score"] >= 80 else ("badge-med" if it["score"] >= 65 else "badge-low")
-        pdf_button = (
-            f'<a href="generated_resumes/{it["pdf_name"]}" target="_blank" class="btn btn-pdf">📄 Open Tailored PDF</a>'
-            if it["pdf_path"]
-            else '<span class="skipped-label">Below Threshold</span>'
-        )
-        note_section = (
-            f'<div class="note-box"><p class="note-text" id="note-{it["company"]}">{it["cover_note"]}</p>'
-            f'<button onclick="navigator.clipboard.writeText(document.getElementById(\'note-{it["company"]}\').innerText); alert(\'Copied outreach note!\');" class="btn btn-copy">📋 Copy Outreach Note</button></div>'
-            if it["cover_note"]
-            else ""
-        )
-
-        cards_html.append(f"""
-        <div class="job-card">
-            <div class="card-header">
-                <div>
-                    <h3>{it['role']}</h3>
-                    <div class="company-sub">{it['company']} • <span class="loc">{it['location']}</span> • <span class="plat">{it['platform'].upper()}</span></div>
-                </div>
-                <div class="score-badge {badge_class}">{it['score']}% ATS</div>
-            </div>
-            <div class="card-actions">
-                {pdf_button}
-                <a href="{it['url']}" target="_blank" class="btn btn-apply">🚀 Apply on {it['platform'].title()}</a>
-            </div>
-            {note_section}
-        </div>
-        """)
-
-    html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Smart Copilot — Daily Action Digest</title>
-    <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 2rem; }}
-        .container {{ max-width: 900px; margin: 0 auto; }}
-        header {{ text-align: center; margin-bottom: 2rem; border-bottom: 1px solid #334155; padding-bottom: 1.5rem; }}
-        h1 {{ font-size: 1.8rem; margin: 0 0 0.5rem 0; color: #38bdf8; }}
-        p.subtitle {{ color: #94a3b8; margin: 0; }}
-        .job-card {{ background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; transition: all 0.2s; }}
-        .job-card.applied {{ border-color: #22c55e; background: #0f291e; opacity: 0.85; }}
-        .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }}
-        h3 {{ margin: 0 0 0.25rem 0; font-size: 1.2rem; }}
-        .company-sub {{ font-size: 0.9rem; color: #94a3b8; }}
-        .plat {{ background: #475569; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; color: #fff; }}
-        .score-badge {{ font-weight: bold; padding: 6px 12px; border-radius: 8px; font-size: 0.95rem; }}
-        .badge-high {{ background: #166534; color: #86efac; border: 1px solid #22c55e; }}
-        .badge-med {{ background: #854d0e; color: #fef08a; border: 1px solid #eab308; }}
-        .badge-low {{ background: #7f1d1d; color: #fca5a5; }}
-        .card-actions {{ display: flex; gap: 0.75rem; align-items: center; margin-top: 1rem; flex-wrap: wrap; }}
-        .btn {{ display: inline-block; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; text-decoration: none; font-weight: 500; cursor: pointer; border: none; }}
-        .btn-apply {{ background: #2563eb; color: #fff; }}
-        .btn-apply:hover {{ background: #1d4ed8; }}
-        .btn-pdf {{ background: #059669; color: #fff; }}
-        .btn-pdf:hover {{ background: #047857; }}
-        .btn-copy {{ background: #475569; color: #fff; font-size: 0.8rem; margin-top: 0.5rem; }}
-        .btn-copy:hover {{ background: #64748b; }}
-        .btn-mark {{ background: #334155; color: #94a3b8; }}
-        .btn-mark:hover {{ background: #475569; color: #fff; }}
-        .note-box {{ background: #0f172a; border: 1px dashed #475569; border-radius: 8px; padding: 0.75rem 1rem; margin-top: 1rem; }}
-        .note-text {{ margin: 0; font-size: 0.88rem; color: #cbd5e1; font-style: italic; }}
-        .skipped-label {{ color: #94a3b8; font-size: 0.85rem; font-style: italic; }}
-    </style>
-    <script>
-        function markApplied(cardId, compName) {{
-            const card = document.getElementById(cardId);
-            if (card) {{
-                card.classList.toggle('applied');
-                const isApp = card.classList.contains('applied');
-                localStorage.setItem('applied_' + compName, isApp ? '1' : '0');
-                const btn = card.querySelector('.btn-mark');
-                if (btn) btn.innerText = isApp ? '✓ Applied' : 'Mark as Applied';
-            }}
-        }}
-        window.addEventListener('DOMContentLoaded', () => {{
-            document.querySelectorAll('.job-card').forEach(card => {{
-                const comp = card.getAttribute('data-comp');
-                if (comp && localStorage.getItem('applied_' + comp) === '1') {{
-                    card.classList.add('applied');
-                    const btn = card.querySelector('.btn-mark');
-                    if (btn) btn.innerText = '✓ Applied';
-                }}
-            }});
-        }});
-    </script>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>🎯 Smart Copilot Action Digest</h1>
-            <p class="subtitle">Candidate: <strong>{candidate_name}</strong> • High-Impact Target Roles</p>
-        </header>
-        {"".join(cards_html)}
-    </div>
-</body>
-</html>"""
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(html, encoding="utf-8")
-
-
-def _render_daily_digest_markdown(
-    items: list[dict],
-    candidate_name: str,
-    output_path: Path,
-    applied_items: list[dict] | None = None,
-) -> None:
-    """Render a clean Markdown summary for GitHub viewing."""
-    from datetime import datetime, timezone
-
-    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-
-    lines = [
-        f"# 🌅 Daily Job & Resume Action Digest — {now_str[:10]}",
-        "",
-        f"**Candidate:** {candidate_name} | **Target Profile:** Assistant Manager / Java Backend (Spring Boot, Kafka, Microservices)",
-        f"**Last Sync:** `{now_str}`",
-        "",
-        "## 🎯 Action Queue (Ready to Apply)",
-        "",
-    ]
-
-    if items:
-        lines.extend([
-            "| Company | Role | Location | ATS Match | Apply Link | Tailored Resume | Recruiter Outreach Note |",
-            "|:---|:---|:---|:---:|:---:|:---:|:---|",
-        ])
-        for it in items:
-            company = it.get("company", "Company")
-            role = it.get("role", "Software Engineer")
-            loc = it.get("location") or "Bengaluru / Gurgaon"
-            score = it.get("score", 0)
-            url = it.get("url", "#")
-            pdf_name = it.get("pdf_name")
-            pdf_link = f"[📄 Download PDF](data/generated_resumes/{pdf_name})" if pdf_name else "N/A"
-            note = it.get("cover_note", "").replace("\n", " ").strip()
-            note_short = f"<details><summary>View Note</summary>{note}</details>" if note else "-"
-
-            apply_btn = f"[🚀 Apply Now]({url})" if url != "#" else "Direct Search"
-            lines.append(
-                f"| **{company}** | {role} | {loc} | **{score}%** | {apply_btn} | {pdf_link} | {note_short} |"
-            )
-    else:
-        lines.append("> 🎉 **All caught up!** You have applied to all recommended roles in the queue. The next automated morning run will discover and tailor fresh roles.")
-
-    if applied_items:
-        lines.extend([
-            "",
-            f"## ✅ Submitted Applications History ({len(applied_items)} Total)",
-            "",
-            "| Company | Role | Platform | ATS Match | Applied Date | Tailored Resume |",
-            "|:---|:---|:---:|:---:|:---|:---:|",
-        ])
-        for it in applied_items:
-            comp = it.get("company", "Company")
-            role = it.get("role", "Software Engineer")
-            plat = it.get("platform", "web").upper()
-            score = it.get("score", 0)
-            applied_at = it.get("applied_at", "-")
-            pdf_name = it.get("pdf_name")
-            pdf_link = f"[📄 PDF](data/generated_resumes/{pdf_name})" if pdf_name else "-"
-            lines.append(
-                f"| **{comp}** | {role} | {plat} | **{score}%** | `{applied_at}` | {pdf_link} |"
-            )
-
-    lines.append("")
-    lines.append("---")
-    lines.append("*Generated by AutoApply Smart Copilot. Resumes are 100% truthful without fabricated credentials or certifications.*")
-    lines.append("")
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text("\n".join(lines), encoding="utf-8")
 
 
 def cmd_morning_run(args: argparse.Namespace) -> None:
@@ -567,18 +418,35 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
     from autoapply.tracker.db import get_engine, get_session, init_db
     from autoapply.tracker.models import Job, Application
     from autoapply.config.schemas import ResumeData
+    from autoapply.presentation.digest import render_copilot_html, render_daily_digest_markdown
     from sqlmodel import select
 
     settings = Settings()
     min_score = args.min_score or 70
     max_search_jobs = args.max_jobs or 12
 
-    console.print("[bold cyan]🌅 Starting Multi-Source Morning Job Discovery (LinkedIn + Instahyre)...[/bold cyan]")
+    # Dynamic search configuration from config/job_filters.yaml
+    filters_path = Path("config/job_filters.yaml")
+    search_kw = "Java Spring Boot Kafka"
+    search_loc = "Bengaluru, Karnataka, India"
+    if filters_path.exists():
+        try:
+            with open(filters_path) as f:
+                f_data = yaml.safe_load(f) or {}
+            li_f = f_data.get("linkedin", {})
+            if li_f.get("keywords"):
+                search_kw = " ".join(li_f["keywords"])
+            if li_f.get("locations"):
+                search_loc = li_f["locations"][0]
+        except Exception as e:
+            logger.warning(f"Could not load filters from {filters_path}: {e}")
 
-    # 1. Scrape latest jobs across multiple top Indian hiring channels
+    console.print(f"[bold cyan]🌅 Starting Multi-Source Morning Discovery for '{search_kw}' in '{search_loc}'...[/bold cyan]")
+
+    # 1. Scrape latest jobs across Instahyre, Direct ATS, and LinkedIn
     discovered_jobs = discover_multi_source_jobs(
-        keywords="Java Spring Boot Kafka",
-        location="Bengaluru, Karnataka, India",
+        keywords=search_kw,
+        location=search_loc,
         posted_within_hours=24,
         max_total_jobs=max_search_jobs,
     )
@@ -625,7 +493,11 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
                 generate_resume_pdf(tailored.model_dump(), str(pdf_path))
 
                 cover_note = tailor.generate_cover_note(resume, item["jd_text"])
-                pdf_path.with_suffix(".txt").write_text(cover_note, encoding="utf-8")
+                ref_pitch = tailor.generate_referral_note(resume, item["company"], item["title"])
+                pdf_path.with_suffix(".txt").write_text(
+                    f"--- Recruiter Note ---\n{cover_note}\n\n--- Referral Pitch ---\n{ref_pitch}\n",
+                    encoding="utf-8",
+                )
 
                 # Insert Job & Application
                 job_platform = item.get("platform", "linkedin")
@@ -657,13 +529,14 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
                     "id": app_rec.id,
                     "company": item["company"],
                     "role": item["title"],
-                    "platform": "linkedin",
+                    "platform": job_platform,
                     "location": item["location"],
                     "url": url,
                     "score": score,
                     "pdf_path": str(pdf_path),
                     "pdf_name": pdf_filename,
                     "cover_note": cover_note,
+                    "referral_note": ref_pitch,
                     "recommended": True,
                 })
 
@@ -680,6 +553,7 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
                 continue
             seen_urls.add(job_rec.url)
             pdf_p = Path(app_rec.tailored_resume_path) if app_rec.tailored_resume_path else None
+            ref_pitch = tailor.generate_referral_note(resume, job_rec.company, job_rec.title)
             active_digest_items.append({
                 "id": app_rec.id,
                 "company": job_rec.company,
@@ -691,6 +565,7 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
                 "pdf_path": str(pdf_p) if pdf_p else None,
                 "pdf_name": pdf_p.name if pdf_p else None,
                 "cover_note": app_rec.notes or "",
+                "referral_note": ref_pitch,
                 "recommended": True,
             })
 
@@ -718,10 +593,10 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
             })
 
     dashboard_path = Path("data/copilot_dashboard.html")
-    _render_copilot_html(active_digest_items, resume.name, dashboard_path)
+    render_copilot_html(active_digest_items, resume.name, dashboard_path)
 
     digest_md_path = Path("DAILY_DIGEST.md")
-    _render_daily_digest_markdown(active_digest_items, resume.name, digest_md_path, applied_items=applied_digest_items)
+    render_daily_digest_markdown(active_digest_items, resume.name, digest_md_path, applied_items=applied_digest_items)
     console.print(f"[bold green]✓ GitHub Digest Markdown generated at:[/bold green] [underline]{digest_md_path}[/underline]")
 
     # 4. Auto Git Commit and Push

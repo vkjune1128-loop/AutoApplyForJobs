@@ -2,19 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Copilot — Daily Action Digest</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 2rem; }
-        .container { max-width: 900px; margin: 0 auto; }
+        .container { max-width: 960px; margin: 0 auto; }
         header { text-align: center; margin-bottom: 2rem; border-bottom: 1px solid #334155; padding-bottom: 1.5rem; }
         h1 { font-size: 1.8rem; margin: 0 0 0.5rem 0; color: #38bdf8; }
         p.subtitle { color: #94a3b8; margin: 0; }
         .job-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; transition: all 0.2s; }
         .job-card.applied { border-color: #22c55e; background: #0f291e; opacity: 0.85; }
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
-        h3 { margin: 0 0 0.25rem 0; font-size: 1.2rem; }
+        h3 { margin: 0 0 0.25rem 0; font-size: 1.25rem; color: #f1f5f9; }
         .company-sub { font-size: 0.9rem; color: #94a3b8; }
-        .plat { background: #475569; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; color: #fff; }
+        .plat { background: #475569; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; color: #fff; font-weight: 600; }
         .score-badge { font-weight: bold; padding: 6px 12px; border-radius: 8px; font-size: 0.95rem; }
         .badge-high { background: #166534; color: #86efac; border: 1px solid #22c55e; }
         .badge-med { background: #854d0e; color: #fef08a; border: 1px solid #eab308; }
@@ -25,21 +26,24 @@
         .btn-apply:hover { background: #1d4ed8; }
         .btn-pdf { background: #059669; color: #fff; }
         .btn-pdf:hover { background: #047857; }
-        .btn-copy { background: #475569; color: #fff; font-size: 0.8rem; margin-top: 0.5rem; }
-        .btn-copy:hover { background: #64748b; }
-        .btn-mark { background: #334155; color: #94a3b8; }
-        .btn-mark:hover { background: #475569; color: #fff; }
+        .btn-copy { background: #334155; color: #f8fafc; font-size: 0.8rem; margin-top: 0.5rem; }
+        .btn-copy:hover { background: #475569; }
+        .btn-ref { background: #1e3a8a; }
+        .btn-ref:hover { background: #2563eb; }
+        .btn-mark { background: #1e293b; color: #94a3b8; border: 1px solid #475569; }
+        .btn-mark:hover { background: #334155; color: #fff; }
         .note-box { background: #0f172a; border: 1px dashed #475569; border-radius: 8px; padding: 0.75rem 1rem; margin-top: 1rem; }
-        .note-text { margin: 0; font-size: 0.88rem; color: #cbd5e1; font-style: italic; }
+        .ref-box { border-color: #3b82f6; }
+        .note-text { margin: 0.35rem 0 0.5rem 0; font-size: 0.88rem; color: #cbd5e1; font-style: italic; line-height: 1.4; }
         .skipped-label { color: #94a3b8; font-size: 0.85rem; font-style: italic; }
     </style>
     <script>
-        function markApplied(cardId, compName) {
-            const card = document.getElementById(cardId);
+        function markApplied(compClean) {
+            const card = document.querySelector(`[data-comp="${compClean}"]`);
             if (card) {
                 card.classList.toggle('applied');
                 const isApp = card.classList.contains('applied');
-                localStorage.setItem('applied_' + compName, isApp ? '1' : '0');
+                localStorage.setItem('applied_' + compClean, isApp ? '1' : '0');
                 const btn = card.querySelector('.btn-mark');
                 if (btn) btn.innerText = isApp ? '✓ Applied' : 'Mark as Applied';
             }
@@ -62,6 +66,57 @@
             <h1>🎯 Smart Copilot Action Digest</h1>
             <p class="subtitle">Candidate: <strong>Vikas Kumar</strong> • High-Impact Target Roles</p>
         </header>
+        
+        <div class="job-card" data-comp="Capgemini">
+            <div class="card-header">
+                <div>
+                    <h3>Software Engineer - Java / Kafka</h3>
+                    <div class="company-sub">Capgemini • <span class="loc">Bengaluru, India</span> • <span class="plat">NAUKRI</span></div>
+                </div>
+                <div class="score-badge badge-high">96% ATS</div>
+            </div>
+            <div class="card-actions">
+                <a href="generated_resumes/Vikas_Kumar_Capgemini_Software_Engineer___Java___Kafka.pdf" target="_blank" class="btn btn-pdf">📄 Open Tailored PDF</a>
+                <a href="https://www.naukri.com/job-listings-software-engineer-java-kafka-capgemini-bengaluru-4-to-6-years-300926036323" target="_blank" class="btn btn-apply">🚀 Apply on Naukri</a>
+                <button onclick="markApplied('Capgemini')" class="btn btn-mark">Mark as Applied</button>
+            </div>
+            <div class="note-box"><strong>📨 Recruiter Outreach Note:</strong><p class="note-text" id="note-Capgemini">Hi, I noticed the exciting backend opening and wanted to reach out. With 4+ years of experience leading high-throughput Java and Spring Boot systems at Samsung SDS, I would love to explore how my background in distributed architecture can add value to your team.</p><button onclick="navigator.clipboard.writeText(document.getElementById('note-Capgemini').innerText); alert('Copied outreach note!');" class="btn btn-copy">📋 Copy Outreach Note</button></div>
+            <div class="note-box ref-box"><strong>🤝 Employee Referral Pitch:</strong><p class="note-text" id="ref-Capgemini">Hi! Hope you're doing well. I noticed the Software Engineer - Java / Kafka opening at Capgemini and would love to be considered. I am currently Assistant Manager at Samsung SDS with 4+ years of experience architecting Core Java, Spring Boot, and Kafka microservices processing 10M+ daily transactions. Would you be open to submitting an internal referral for me? I can share my resume and relevant details right away. Thanks in advance!</p><button onclick="navigator.clipboard.writeText(document.getElementById('ref-Capgemini').innerText); alert('Copied referral pitch!');" class="btn btn-copy btn-ref">📋 Copy Referral Pitch</button></div>
+        </div>
+        
+        <div class="job-card" data-comp="Oracle">
+            <div class="card-header">
+                <div>
+                    <h3>Senior Java Backend Engineer</h3>
+                    <div class="company-sub">Oracle • <span class="loc">Bengaluru / Hyderabad</span> • <span class="plat">LINKEDIN</span></div>
+                </div>
+                <div class="score-badge badge-med">79% ATS</div>
+            </div>
+            <div class="card-actions">
+                <a href="generated_resumes/Vikas_Kumar_Oracle_Senior_Java_Backend_Engineer.pdf" target="_blank" class="btn btn-pdf">📄 Open Tailored PDF</a>
+                <a href="https://www.oracle.com/careers" target="_blank" class="btn btn-apply">🚀 Apply on Linkedin</a>
+                <button onclick="markApplied('Oracle')" class="btn btn-mark">Mark as Applied</button>
+            </div>
+            <div class="note-box"><strong>📨 Recruiter Outreach Note:</strong><p class="note-text" id="note-Oracle">Hi, I noticed the exciting backend opening and wanted to reach out. With 4+ years of experience leading high-throughput Java and Spring Boot systems at Samsung SDS, I would love to explore how my background in distributed architecture can add value to your team.</p><button onclick="navigator.clipboard.writeText(document.getElementById('note-Oracle').innerText); alert('Copied outreach note!');" class="btn btn-copy">📋 Copy Outreach Note</button></div>
+            <div class="note-box ref-box"><strong>🤝 Employee Referral Pitch:</strong><p class="note-text" id="ref-Oracle">Hi! Hope you're doing well. I noticed the Senior Java Backend Engineer opening at Oracle and would love to be considered. I am currently Assistant Manager at Samsung SDS with 4+ years of experience architecting Core Java, Spring Boot, and Kafka microservices processing 10M+ daily transactions. Would you be open to submitting an internal referral for me? I can share my resume and relevant details right away. Thanks in advance!</p><button onclick="navigator.clipboard.writeText(document.getElementById('ref-Oracle').innerText); alert('Copied referral pitch!');" class="btn btn-copy btn-ref">📋 Copy Referral Pitch</button></div>
+        </div>
+        
+        <div class="job-card" data-comp="PayPal">
+            <div class="card-header">
+                <div>
+                    <h3>Software Engineer - Java Services</h3>
+                    <div class="company-sub">PayPal • <span class="loc">Bengaluru</span> • <span class="plat">NAUKRI</span></div>
+                </div>
+                <div class="score-badge badge-med">72% ATS</div>
+            </div>
+            <div class="card-actions">
+                <a href="generated_resumes/Vikas_Kumar_PayPal_Software_Engineer___Java_Services.pdf" target="_blank" class="btn btn-pdf">📄 Open Tailored PDF</a>
+                <a href="https://www.paypal.com/jobs" target="_blank" class="btn btn-apply">🚀 Apply on Naukri</a>
+                <button onclick="markApplied('PayPal')" class="btn btn-mark">Mark as Applied</button>
+            </div>
+            <div class="note-box"><strong>📨 Recruiter Outreach Note:</strong><p class="note-text" id="note-PayPal">Hi, I noticed the exciting backend opening and wanted to reach out. With 4+ years of experience leading high-throughput Java and Spring Boot systems at Samsung SDS, I would love to explore how my background in distributed architecture can add value to your team.</p><button onclick="navigator.clipboard.writeText(document.getElementById('note-PayPal').innerText); alert('Copied outreach note!');" class="btn btn-copy">📋 Copy Outreach Note</button></div>
+            <div class="note-box ref-box"><strong>🤝 Employee Referral Pitch:</strong><p class="note-text" id="ref-PayPal">Hi! Hope you're doing well. I noticed the Software Engineer - Java Services opening at PayPal and would love to be considered. I am currently Assistant Manager at Samsung SDS with 4+ years of experience architecting Core Java, Spring Boot, and Kafka microservices processing 10M+ daily transactions. Would you be open to submitting an internal referral for me? I can share my resume and relevant details right away. Thanks in advance!</p><button onclick="navigator.clipboard.writeText(document.getElementById('ref-PayPal').innerText); alert('Copied referral pitch!');" class="btn btn-copy btn-ref">📋 Copy Referral Pitch</button></div>
+        </div>
         
     </div>
 </body>

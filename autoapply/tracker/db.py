@@ -7,6 +7,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Generator
 
+from sqlalchemy import event
 from sqlmodel import Session, SQLModel, create_engine, select, func
 
 from autoapply.tracker.models import Application, Job, TailoredResume
@@ -16,20 +17,33 @@ logger = get_logger(__name__)
 
 
 def get_engine(db_path: str) -> object:
-    """Create a SQLAlchemy/SQLModel engine for the given SQLite path.
+    """Create a SQLAlchemy/SQLModel engine for the given SQLite path with WAL mode.
 
     Args:
         db_path: Filesystem path for the SQLite database file.
 
     Returns:
-        SQLAlchemy Engine.
+        SQLAlchemy Engine with WAL mode and busy timeout configured.
     """
     # Ensure parent directory exists
     Path(db_path).parent.mkdir(parents=True, exist_ok=True)
 
     url = f"sqlite:///{db_path}"
     engine = create_engine(url, echo=False)
-    logger.info(f"Database engine created: {url}")
+
+    # Configure SQLite WAL journal mode and busy timeout to prevent database locks
+    @event.listens_for(engine, "connect")
+    def _set_sqlite_pragma(dbapi_connection: object, connection_record: object) -> None:
+        try:
+            cursor = dbapi_connection.cursor()  # type: ignore[attr-defined]
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.execute("PRAGMA busy_timeout=5000;")
+            cursor.execute("PRAGMA synchronous=NORMAL;")
+            cursor.close()
+        except Exception as e:
+            logger.debug(f"Could not set SQLite PRAGMA: {e}")
+
+    logger.info(f"Database engine created with WAL mode: {url}")
     return engine
 
 
