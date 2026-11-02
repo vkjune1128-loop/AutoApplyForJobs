@@ -20,9 +20,9 @@ case "$action" in
         launchctl unload "${TARGET_PLIST}" 2>/dev/null || true
         cp "${SOURCE_PLIST}" "${TARGET_PLIST}"
         launchctl load "${TARGET_PLIST}"
-        echo "✓ AutoApply morning scheduler installed to macOS launchd!"
-        echo "  - Scheduled for: Every day at 08:00 AM"
-        echo "  - Sleep behavior: If Mac is asleep at 8 AM, it runs immediately upon waking up"
+        echo "✓ AutoApply scheduler installed to macOS launchd!"
+        echo "  - Scheduled for: Every day at 05:30 AM IST and 02:30 PM IST"
+        echo "  - Sleep behavior: If Mac is asleep, it runs automatically upon waking up"
         echo "  - Script: ${SCRIPT_DIR}/run_morning.sh"
         echo "  - Logs: data/morning_run.log"
         ;;

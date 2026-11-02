@@ -12,12 +12,22 @@
     <key>WorkingDirectory</key>
     <string>/Users/vikaskumar/Documents/Projects/AutoApplyForJobs</string>
     <key>StartCalendarInterval</key>
-    <dict>
-        <key>Hour</key>
-        <integer>8</integer>
-        <key>Minute</key>
-        <integer>0</integer>
-    </dict>
+    <array>
+        <!-- Morning run: 5:30 AM IST -->
+        <dict>
+            <key>Hour</key>
+            <integer>5</integer>
+            <key>Minute</key>
+            <integer>30</integer>
+        </dict>
+        <!-- Afternoon run: 2:30 PM (14:30) IST -->
+        <dict>
+            <key>Hour</key>
+            <integer>14</integer>
+            <key>Minute</key>
+            <integer>30</integer>
+        </dict>
+    </array>
     <key>StandardOutPath</key>
     <string>/Users/vikaskumar/Documents/Projects/AutoApplyForJobs/data/launchd_stdout.log</string>
     <key>StandardErrorPath</key>

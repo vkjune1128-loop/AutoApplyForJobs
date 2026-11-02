@@ -1,9 +1,10 @@
-name: Daily AutoApply Morning Digest
+name: Daily AutoApply Jobs Digest
 
 on:
   schedule:
-    # Runs at 02:30 UTC every day (8:00 AM IST)
-    - cron: '30 2 * * *'
+    # 5:30 AM IST (00:00 UTC) and 2:30 PM IST (09:00 UTC) every day
+    - cron: '0 0 * * *'
+    - cron: '0 9 * * *'
   workflow_dispatch:
     # Allows manual trigger anytime from GitHub Actions tab
 
