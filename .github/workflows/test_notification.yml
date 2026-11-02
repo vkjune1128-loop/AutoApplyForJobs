@@ -1,0 +1,22 @@
+name: Test Mobile Notification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment as GitHub Actions Bot
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 3,
+              body: '🚨 @vkjune1128-loop Push Notification from GitHub Bot! Because this is sent by github-actions[bot] (not your own user token), it appears directly in your GitHub Inbox and on your phone!'
+            });
