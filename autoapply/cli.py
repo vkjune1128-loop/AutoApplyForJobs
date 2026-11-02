@@ -459,6 +459,16 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
     engine = get_engine(settings.db_path)
     init_db(engine)
 
+    # 0. Sync previously closed GitHub Issues back to DB before discovery (Two-Way Sync)
+    from autoapply.platforms.github_issues import sync_closed_issues_to_db, create_or_update_digest_issue
+
+    try:
+        synced_count = sync_closed_issues_to_db(engine, settings)
+        if synced_count > 0:
+            console.print(f"[bold green]✓ Synced {synced_count} application(s) from closed GitHub issues into DB![/bold green]")
+    except Exception as e:
+        logger.warning(f"GitHub issues pre-sync skipped: {e}")
+
     with open("config/master_resume.yaml") as f:
         resume = ResumeData.model_validate(yaml.safe_load(f))
 
@@ -621,6 +631,31 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
     except Exception as e:
         logger.warning(f"Git commit/push failed: {e}")
 
+    # 5. Create / Update GitHub Issue with @mention for instant mobile push notification
+    try:
+        issue_num = create_or_update_digest_issue(active_digest_items, resume.name, settings)
+        if issue_num:
+            console.print(f"[bold green]✓ GitHub Issue #{issue_num} notified! Check your phone's GitHub app.[/bold green]")
+    except Exception as e:
+        logger.warning(f"GitHub issue notification skipped: {e}")
+
+
+def cmd_sync_issues(args: argparse.Namespace) -> None:
+    """Manually sync closed GitHub issues back to SQLite database."""
+    from autoapply.platforms.github_issues import sync_closed_issues_to_db
+    from autoapply.tracker.db import get_engine, init_db
+
+    settings = Settings()
+    engine = get_engine(settings.db_path)
+    init_db(engine)
+
+    console.print("[cyan]Syncing closed GitHub issues back to database...[/cyan]")
+    synced = sync_closed_issues_to_db(engine, settings)
+    if synced > 0:
+        console.print(f"[bold green]✓ Successfully synced {synced} application(s) as APPLIED in database![/bold green]")
+    else:
+        console.print("[yellow]No newly closed digest issues to sync.[/yellow]")
+
 
 def cmd_mark_applied(args: argparse.Namespace) -> None:
     """Mark a job application as applied in SQLite DB."""
@@ -709,6 +744,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_applied.add_argument("--id", type=int, help="Application ID to mark applied")
     p_applied.add_argument("--company", "-c", type=str, help="Company name to mark applied")
     p_applied.set_defaults(func=cmd_mark_applied)
+
+    # sync-issues
+    p_sync = subparsers.add_parser("sync-issues", help="Sync closed GitHub issues back to tracker database")
+    p_sync.set_defaults(func=cmd_sync_issues)
 
     return parser
 

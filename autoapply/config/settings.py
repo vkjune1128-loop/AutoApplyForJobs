@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     # AI
     gemini_api_key: str = ""
 
+    # GitHub (for Issue notifications & two-way sync)
+    github_token: str = ""
+    github_repo: str = "vkjune1128-loop/AutoApplyForJobs"
+    github_username: str = "vkjune1128-loop"
+
     # Runtime settings
     max_applications_per_day: int = 20
     headless_browser: bool = False
