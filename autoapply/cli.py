@@ -636,12 +636,36 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
 
     console.print(f"[bold green]✓ Discovered & tailored {new_matches} high-match jobs (≥{min_score}% ATS)![/bold green]")
 
-    # 3. Update HTML Dashboard and DAILY_DIGEST.md
+    # 3. Update HTML Dashboard and DAILY_DIGEST.md with all active ready-to-apply roles
+    with get_session(engine) as session:
+        statement = select(Application, Job).join(Job).where(Application.status == "ready_to_apply").order_by(Application.id.desc())
+        all_active = session.exec(statement).all()
+        seen_urls = set()
+        active_digest_items = []
+        for app_rec, job_rec in all_active:
+            if job_rec.url in seen_urls:
+                continue
+            seen_urls.add(job_rec.url)
+            pdf_p = Path(app_rec.tailored_resume_path) if app_rec.tailored_resume_path else None
+            active_digest_items.append({
+                "id": app_rec.id,
+                "company": job_rec.company,
+                "role": job_rec.title,
+                "platform": job_rec.platform,
+                "location": job_rec.location,
+                "url": job_rec.url,
+                "score": app_rec.ats_score,
+                "pdf_path": str(pdf_p) if pdf_p else None,
+                "pdf_name": pdf_p.name if pdf_p else None,
+                "cover_note": app_rec.notes or "",
+                "recommended": True,
+            })
+
     dashboard_path = Path("data/copilot_dashboard.html")
-    _render_copilot_html(all_digest_items, resume.name, dashboard_path)
+    _render_copilot_html(active_digest_items, resume.name, dashboard_path)
 
     digest_md_path = Path("DAILY_DIGEST.md")
-    _render_daily_digest_markdown(all_digest_items, resume.name, digest_md_path)
+    _render_daily_digest_markdown(active_digest_items, resume.name, digest_md_path)
     console.print(f"[bold green]✓ GitHub Digest Markdown generated at:[/bold green] [underline]{digest_md_path}[/underline]")
 
     # 4. Auto Git Commit and Push
