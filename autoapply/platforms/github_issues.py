@@ -201,8 +201,24 @@ def sync_closed_issues_to_db(engine: object, settings: Settings) -> int:
             else:
                 closed_at = datetime.now(timezone.utc)
 
-            # Extract companies mentioned in the issue table (e.g. | **Capgemini** | ...)
-            companies_in_issue = re.findall(r"\|\s*\*\*([^*]+)\*\*\s*\|", issue_body)
+            # Extract only from Action Queue section if present to avoid history table
+            queue_section = issue_body
+            if "## 🎯 Action Queue" in issue_body:
+                queue_section = issue_body.split("## 🎯 Action Queue")[1]
+                if "## ✅ Submitted Applications" in queue_section:
+                    queue_section = queue_section.split("## ✅ Submitted Applications")[0]
+            elif "### 🎯 Action Queue" in issue_body:
+                queue_section = issue_body.split("### 🎯 Action Queue")[1]
+                if "###" in queue_section:
+                    queue_section = queue_section.split("###")[0]
+
+            # Extract companies (first column of the action queue table)
+            companies_in_issue = []
+            for line in queue_section.splitlines():
+                m = re.match(r"\|\s*\*\*([^*]+)\*\*\s*\|", line)
+                if m:
+                    companies_in_issue.append(m.group(1).strip())
+
             if not companies_in_issue:
                 # Fallback: look for 🏢 Company — Role
                 companies_in_issue = re.findall(r"#### 🏢 ([^\s—]+)", issue_body)
@@ -210,11 +226,12 @@ def sync_closed_issues_to_db(engine: object, settings: Settings) -> int:
             if not companies_in_issue:
                 continue
 
-            # Fetch any user comments on this issue
-            comments = _github_api_request(
+            # Fetch any user comments on this issue (ignore bot notifications)
+            raw_comments = _github_api_request(
                 f"/repos/{repo}/issues/{issue_num}/comments",
                 token=token,
             ) or []
+            comments = [c for c in raw_comments if c.get("user", {}).get("type") != "Bot" and not c.get("user", {}).get("login", "").endswith("[bot]")]
 
             applied_companies: set[str] = set()
             skipped_companies: set[str] = set()

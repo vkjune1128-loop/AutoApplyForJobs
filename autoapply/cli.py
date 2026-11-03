@@ -654,6 +654,101 @@ def cmd_sync_issues(args: argparse.Namespace) -> None:
     synced = sync_closed_issues_to_db(engine, settings)
     if synced > 0:
         console.print(f"[bold green]✓ Successfully synced {synced} application(s) as APPLIED in database![/bold green]")
+
+        # Regenerate daily digest markdown and dashboard
+        try:
+            import subprocess
+            import yaml
+            from autoapply.config.schemas import ResumeData
+            from autoapply.core.tailor import ResumeTailor
+            from autoapply.presentation.digest import render_copilot_html, render_daily_digest_markdown
+            from autoapply.tracker.db import get_session
+            from autoapply.tracker.models import Application, Job
+            from sqlmodel import select
+
+            with open("config/master_resume.yaml") as f:
+                resume = ResumeData.model_validate(yaml.safe_load(f))
+            tailor = ResumeTailor(api_key=settings.gemini_api_key)
+
+            with get_session(engine) as session:
+                ready_stmt = (
+                    select(Application, Job)
+                    .join(Job)
+                    .where(Application.status == "ready_to_apply")
+                    .order_by(Application.ats_score.desc())
+                )
+                all_ready = session.exec(ready_stmt).all()
+                active_digest_items = []
+                seen = set()
+                for app_rec, job_rec in all_ready:
+                    if job_rec.url in seen:
+                        continue
+                    seen.add(job_rec.url)
+                    pdf_p = Path(app_rec.tailored_resume_path) if app_rec.tailored_resume_path else None
+                    ref_pitch = tailor.generate_referral_note(resume, job_rec.company, job_rec.title)
+                    active_digest_items.append({
+                        "id": app_rec.id,
+                        "company": job_rec.company,
+                        "role": job_rec.title,
+                        "platform": job_rec.platform,
+                        "location": job_rec.location,
+                        "url": job_rec.url,
+                        "score": app_rec.ats_score,
+                        "pdf_path": str(pdf_p) if pdf_p else None,
+                        "pdf_name": pdf_p.name if pdf_p else None,
+                        "cover_note": app_rec.notes or "",
+                        "referral_note": ref_pitch,
+                        "recommended": True,
+                    })
+
+                applied_stmt = (
+                    select(Application, Job)
+                    .join(Job)
+                    .where(Application.status == "applied")
+                    .order_by(Application.applied_at.desc())
+                )
+                all_applied = session.exec(applied_stmt).all()
+                applied_digest_items = []
+                seen_applied = set()
+                for app_rec, job_rec in all_applied:
+                    if job_rec.url in seen_applied:
+                        continue
+                    seen_applied.add(job_rec.url)
+                    pdf_p = Path(app_rec.tailored_resume_path) if app_rec.tailored_resume_path else None
+                    applied_str = app_rec.applied_at.strftime("%Y-%m-%d %H:%M UTC") if app_rec.applied_at else "-"
+                    applied_digest_items.append({
+                        "id": app_rec.id,
+                        "company": job_rec.company,
+                        "role": job_rec.title,
+                        "platform": job_rec.platform,
+                        "location": job_rec.location,
+                        "score": app_rec.ats_score,
+                        "pdf_path": str(pdf_p) if pdf_p else None,
+                        "pdf_name": pdf_p.name if pdf_p else None,
+                        "applied_at": applied_str,
+                    })
+
+            dashboard_path = Path("data/copilot_dashboard.html")
+            render_copilot_html(active_digest_items, resume.name, dashboard_path)
+
+            digest_md_path = Path("DAILY_DIGEST.md")
+            render_daily_digest_markdown(active_digest_items, resume.name, digest_md_path, applied_items=applied_digest_items)
+            console.print(f"[bold green]✓ Updated Daily Digest:[/bold green] [underline]{digest_md_path}[/underline]")
+
+            # Auto Git Commit and Push
+            commit_msg = f"chore(sync): {synced} application(s) synced from closed GitHub issue"
+            subprocess.run(["git", "add", "data/", "DAILY_DIGEST.md"], check=False)
+            res = subprocess.run(["git", "commit", "-m", commit_msg], capture_output=True, text=True)
+            if res.returncode == 0:
+                console.print(f"[green]✓ Git commit created: [dim]{commit_msg}[/dim][/green]")
+                remotes = subprocess.run(["git", "remote"], capture_output=True, text=True).stdout.strip()
+                if remotes:
+                    subprocess.run(["git", "pull", "--rebase", "origin", "main"], capture_output=True, text=True)
+                    push_res = subprocess.run(["git", "push", "origin", "HEAD"], capture_output=True, text=True)
+                    if push_res.returncode == 0:
+                        console.print("[bold green]✓ Pushed updated tracker & digest to Git![/bold green]")
+        except Exception as e:
+            logger.warning(f"Digest regeneration/push after sync skipped: {e}")
     else:
         console.print("[yellow]No newly closed digest issues to sync.[/yellow]")
 
