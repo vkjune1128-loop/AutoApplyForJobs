@@ -30,6 +30,9 @@ Thumbs.db
 
 # Project-specific
 data/browser_state/
+data/*.log
+data/*-wal
+data/*-shm
 # Generated resumes and tracker database (tracked for GitHub digest and sync)
 !data/generated_resumes/
 !data/generated_resumes/*

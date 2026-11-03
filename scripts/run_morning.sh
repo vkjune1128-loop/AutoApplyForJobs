@@ -6,7 +6,7 @@
 
 set -o pipefail
 
-REPO_DIR="/Users/vikaskumar/Documents/Projects/AutoApplyForJobs"
+REPO_DIR="/Users/vikaskumar/Projects/AutoApplyForJobs"
 LOG_FILE="${REPO_DIR}/data/morning_run.log"
 
 cd "${REPO_DIR}"

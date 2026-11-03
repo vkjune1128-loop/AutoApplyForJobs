@@ -619,6 +619,7 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
             console.print(f"[green]✓ Git commit created: [dim]{commit_msg}[/dim][/green]")
             remotes = subprocess.run(["git", "remote"], capture_output=True, text=True).stdout.strip()
             if remotes:
+                subprocess.run(["git", "pull", "--rebase", "origin", "main"], capture_output=True, text=True)
                 push_res = subprocess.run(["git", "push", "origin", "HEAD"], capture_output=True, text=True)
                 if push_res.returncode == 0:
                     console.print("[bold green]✓ Successfully pushed HTML digest and tailored resumes to Git origin/main![/bold green]")

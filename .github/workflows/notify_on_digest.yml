@@ -65,7 +65,13 @@ jobs:
                 title: issueTitle,
                 body: issueBody
               });
-              console.log(`Successfully updated Issue #${existingNum}`);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingNum,
+                body: `🔔 Hey @${username}! Your Daily Action Queue has been refreshed with newly tailored roles. Check the issue description above to apply!`
+              });
+              console.log(`Successfully updated Issue #${existingNum} and notified mobile`);
             } else {
               console.log('Creating new daily-digest issue...');
               const newIssue = await github.rest.issues.create({
