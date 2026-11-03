@@ -1,0 +1,5 @@
+--- Recruiter Note ---
+Hi, I noticed the exciting backend opening and wanted to reach out. With 4+ years of experience leading high-throughput Java and Spring Boot systems at Samsung SDS, I would love to explore how my background in distributed architecture can add value to your team.
+
+--- Referral Pitch ---
+Hi! Hope you're doing well. I noticed the Specialist Software Engineer - Java Back End opening at Societe Generale Global Solution Centre and would love to be considered. I am currently Assistant Manager at Samsung SDS with 4+ years of experience architecting Core Java, Spring Boot, and Kafka microservices processing 10M+ daily transactions. Would you be open to submitting an internal referral for me? I can share my resume and relevant details right away. Thanks in advance!
