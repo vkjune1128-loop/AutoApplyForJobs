@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -81,7 +82,12 @@ def create_or_update_digest_issue(
         score = it.get("score", 0)
         url = it.get("url", "#")
         pdf_name = it.get("pdf_name")
-        pdf_link = f"[📄 Download PDF](data/generated_resumes/{pdf_name})" if pdf_name else "N/A"
+        if pdf_name:
+            quoted_name = urllib.parse.quote(pdf_name)
+            raw_url = f"https://raw.githubusercontent.com/{repo}/main/data/generated_resumes/{quoted_name}"
+            pdf_link = f"[📄 Download PDF]({raw_url})"
+        else:
+            pdf_link = "N/A"
         apply_link = f"[🚀 Apply Now]({url})" if url != "#" else "Direct Search"
         lines.append(f"| **{comp}** | {role} | **{score}%** | {apply_link} | {pdf_link} |")
 

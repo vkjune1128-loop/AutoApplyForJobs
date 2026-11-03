@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+import urllib.parse
 
 
 def render_copilot_html(items: list[dict], candidate_name: str, output_path: Path) -> None:
@@ -12,8 +13,10 @@ def render_copilot_html(items: list[dict], candidate_name: str, output_path: Pat
     for it in items:
         score = it.get("score", 0)
         badge_class = "badge-high" if score >= 80 else ("badge-med" if score >= 65 else "badge-low")
+        pdf_name = it.get("pdf_name")
+        quoted_pdf = urllib.parse.quote(pdf_name) if pdf_name else ""
         pdf_button = (
-            f'<a href="generated_resumes/{it["pdf_name"]}" target="_blank" class="btn btn-pdf">📄 Open Tailored PDF</a>'
+            f'<a href="generated_resumes/{quoted_pdf}" target="_blank" class="btn btn-pdf">📄 Open Tailored PDF</a>'
             if it.get("pdf_path")
             else '<span class="skipped-label">Below Threshold</span>'
         )
@@ -144,6 +147,8 @@ def render_daily_digest_markdown(
     candidate_name: str,
     output_path: Path,
     applied_items: list[dict] | None = None,
+    repo_slug: str = "vkjune1128-loop/AutoApplyForJobs",
+    branch: str = "main",
 ) -> None:
     """Render a clean Markdown summary for GitHub viewing."""
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -170,7 +175,12 @@ def render_daily_digest_markdown(
             score = it.get("score", 0)
             url = it.get("url", "#")
             pdf_name = it.get("pdf_name")
-            pdf_link = f"[📄 Download PDF](data/generated_resumes/{pdf_name})" if pdf_name else "N/A"
+            if pdf_name:
+                quoted_name = urllib.parse.quote(pdf_name)
+                raw_url = f"https://raw.githubusercontent.com/{repo_slug}/{branch}/data/generated_resumes/{quoted_name}"
+                pdf_link = f"[📄 Download PDF]({raw_url})"
+            else:
+                pdf_link = "N/A"
             note = it.get("cover_note", "").replace("\n", " ").strip()
             note_short = f"<details><summary>Outreach</summary>{note}</details>" if note else "-"
 
@@ -199,7 +209,12 @@ def render_daily_digest_markdown(
             score = it.get("score", 0)
             applied_at = it.get("applied_at", "-")
             pdf_name = it.get("pdf_name")
-            pdf_link = f"[📄 PDF](data/generated_resumes/{pdf_name})" if pdf_name else "-"
+            if pdf_name:
+                quoted_name = urllib.parse.quote(pdf_name)
+                raw_url = f"https://raw.githubusercontent.com/{repo_slug}/{branch}/data/generated_resumes/{quoted_name}"
+                pdf_link = f"[📄 PDF]({raw_url})"
+            else:
+                pdf_link = "-"
             lines.append(
                 f"| **{comp}** | {role} | {plat} | **{score}%** | `{applied_at}` | {pdf_link} |"
             )
