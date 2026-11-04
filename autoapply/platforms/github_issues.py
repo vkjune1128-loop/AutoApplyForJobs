@@ -141,6 +141,19 @@ def create_or_update_digest_issue(
                 data={"title": issue_title, "body": issue_body},
                 token=token,
             )
+
+            # Trigger GitHub Actions bot to post an alert comment (guarantees mobile push notification)
+            try:
+                _github_api_request(
+                    f"/repos/{repo}/actions/workflows/notify_on_digest.yml/dispatches",
+                    method="POST",
+                    data={"ref": "main"},
+                    token=token,
+                )
+                logger.info("✓ Dispatched GitHub Actions mobile alert notifier bot")
+            except Exception as e:
+                logger.debug(f"Workflow dispatch alert skipped: {e}")
+
             return issue_num
 
         # Otherwise create a new issue
@@ -157,6 +170,19 @@ def create_or_update_digest_issue(
         )
         issue_num = new_issue.get("number")
         logger.info(f"✓ Created GitHub Issue #{issue_num}: '{issue_title}'")
+
+        # Trigger GitHub Actions bot to post an alert comment (guarantees mobile push notification)
+        try:
+            _github_api_request(
+                f"/repos/{repo}/actions/workflows/notify_on_digest.yml/dispatches",
+                method="POST",
+                data={"ref": "main"},
+                token=token,
+            )
+            logger.info("✓ Dispatched GitHub Actions mobile alert notifier bot")
+        except Exception as e:
+            logger.debug(f"Workflow dispatch alert skipped: {e}")
+
         return issue_num
 
     except Exception as e:
