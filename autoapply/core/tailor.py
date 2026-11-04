@@ -55,7 +55,7 @@ class ResumeTailor:
     def __init__(self, api_key: str, model: str = "gemini-flash-latest") -> None:
         self.model = model
         self.client = (
-            genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=15000))
+            genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=12))
             if api_key
             else None
         )

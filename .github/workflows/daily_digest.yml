@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   morning-digest:
@@ -54,6 +55,66 @@ jobs:
           if git diff --staged --quiet; then
             echo "No new jobs discovered today. Nothing to commit."
           else
-            git commit -m "chore(morning-digest): $(date -u +'%Y-%m-%d') daily job digest & resumes [skip ci]"
+            git commit -m "chore(morning-digest): $(date -u +'%Y-%m-%d') daily job digest & resumes"
             git push origin main
           fi
+
+      - name: Check digest and notify mobile via GitHub Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('DAILY_DIGEST.md')) return;
+            const digestContent = fs.readFileSync('DAILY_DIGEST.md', 'utf8');
+            if (digestContent.includes('All caught up!') || !digestContent.includes('|:---|:---|')) {
+              console.log('Action queue is all caught up. No notification needed.');
+              return;
+            }
+            const username = 'vkjune1128-loop';
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const issueTitle = `🌅 Daily Action Queue — ${todayStr} (Fresh Roles Ready)`;
+            const issueBody = `Hey @${username}! 🌅 **Your daily tailored jobs are ready.**\n\n` +
+              `Tap **[🚀 Apply Now]** on the roles below, upload your tailored PDFs, and tap **Close Issue** when you're done!\n\n` +
+              `> 💡 *Closing this issue automatically syncs your applications into the SQLite database on your Mac!*\n\n` +
+              `---\n\n` +
+              digestContent;
+
+            const openIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'daily-digest'
+            });
+
+            if (openIssues.data.length > 0) {
+              const existingNum = openIssues.data[0].number;
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingNum,
+                title: issueTitle,
+                body: issueBody
+              });
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingNum,
+                body: `🔔 Hey @${username}! Your Daily Action Queue has been refreshed with newly tailored roles. Check the issue description above to apply!`
+              });
+              console.log(`Updated Issue #${existingNum} and notified mobile`);
+            } else {
+              const newIssue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['daily-digest', 'ready-to-apply']
+              });
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: newIssue.data.number,
+                body: `🔔 Hey @${username}! Your Daily Action Queue is ready with fresh roles. Check the issue description above to apply!`
+              });
+              console.log(`Created Issue #${newIssue.data.number} and notified mobile`);
+            }

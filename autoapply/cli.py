@@ -425,6 +425,15 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
     min_score = args.min_score or 70
     max_search_jobs = args.max_jobs or 12
 
+    # Pre-pull latest remote updates to prevent git divergence
+    try:
+        remotes = subprocess.run(["git", "remote"], capture_output=True, text=True).stdout.strip()
+        if remotes:
+            push_target = f"https://x-access-token:{settings.github_token}@github.com/{settings.github_repo}.git" if settings.github_token else "origin"
+            subprocess.run(["git", "pull", "--rebase", "--autostash", push_target, "main"], capture_output=True, text=True)
+    except Exception as e:
+        logger.warning(f"Git pre-pull skipped: {e}")
+
     # Dynamic search configuration from config/job_filters.yaml
     filters_path = Path("config/job_filters.yaml")
     search_kw = "Java Spring Boot Kafka"
@@ -619,8 +628,9 @@ def cmd_morning_run(args: argparse.Namespace) -> None:
             console.print(f"[green]✓ Git commit created: [dim]{commit_msg}[/dim][/green]")
             remotes = subprocess.run(["git", "remote"], capture_output=True, text=True).stdout.strip()
             if remotes:
-                subprocess.run(["git", "pull", "--rebase", "origin", "main"], capture_output=True, text=True)
-                push_res = subprocess.run(["git", "push", "origin", "HEAD"], capture_output=True, text=True)
+                push_target = f"https://x-access-token:{settings.github_token}@github.com/{settings.github_repo}.git" if settings.github_token else "origin"
+                subprocess.run(["git", "pull", "--rebase", "--autostash", push_target, "main"], capture_output=True, text=True)
+                push_res = subprocess.run(["git", "push", push_target, "HEAD:main"], capture_output=True, text=True)
                 if push_res.returncode == 0:
                     console.print("[bold green]✓ Successfully pushed HTML digest and tailored resumes to Git origin/main![/bold green]")
                 else:
@@ -743,8 +753,9 @@ def cmd_sync_issues(args: argparse.Namespace) -> None:
                 console.print(f"[green]✓ Git commit created: [dim]{commit_msg}[/dim][/green]")
                 remotes = subprocess.run(["git", "remote"], capture_output=True, text=True).stdout.strip()
                 if remotes:
-                    subprocess.run(["git", "pull", "--rebase", "origin", "main"], capture_output=True, text=True)
-                    push_res = subprocess.run(["git", "push", "origin", "HEAD"], capture_output=True, text=True)
+                    push_target = f"https://x-access-token:{settings.github_token}@github.com/{settings.github_repo}.git" if settings.github_token else "origin"
+                    subprocess.run(["git", "pull", "--rebase", "--autostash", push_target, "main"], capture_output=True, text=True)
+                    push_res = subprocess.run(["git", "push", push_target, "HEAD:main"], capture_output=True, text=True)
                     if push_res.returncode == 0:
                         console.print("[bold green]✓ Pushed updated tracker & digest to Git![/bold green]")
         except Exception as e:
