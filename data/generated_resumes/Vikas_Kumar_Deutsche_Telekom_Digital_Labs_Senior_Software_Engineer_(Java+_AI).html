@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vikas Kumar — Resume</title>
+    <style>
+        /* ATS-friendly resume template — single column, no tables, no images, system fonts */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 10.5pt;
+            line-height: 1.45;
+            color: #222;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 0.5in 0.6in;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 12pt;
+            border-bottom: 1.5pt solid #333;
+            padding-bottom: 8pt;
+        }
+
+        .header h1 {
+            font-size: 18pt;
+            font-weight: 700;
+            letter-spacing: 0.5pt;
+            margin-bottom: 4pt;
+            color: #111;
+        }
+
+        .contact-info {
+            font-size: 9.5pt;
+            color: #444;
+        }
+
+        .contact-info a {
+            color: #444;
+            text-decoration: none;
+        }
+
+        .contact-info span {
+            margin: 0 4pt;
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 11.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8pt;
+            color: #111;
+            border-bottom: 0.75pt solid #999;
+            padding-bottom: 2pt;
+            margin-top: 14pt;
+            margin-bottom: 6pt;
+        }
+
+        /* Summary */
+        .summary {
+            margin-bottom: 4pt;
+            font-size: 10pt;
+        }
+
+        /* Skills */
+        .skills {
+            margin-bottom: 4pt;
+            font-size: 10pt;
+        }
+
+        /* Experience */
+        .experience-item {
+            margin-bottom: 10pt;
+        }
+
+        .experience-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 2pt;
+        }
+
+        .experience-header .title-company {
+            font-weight: 600;
+            font-size: 10.5pt;
+        }
+
+        .experience-header .dates {
+            font-size: 9.5pt;
+            color: #555;
+            white-space: nowrap;
+        }
+
+        .experience-location {
+            font-size: 9.5pt;
+            color: #555;
+            margin-bottom: 3pt;
+        }
+
+        .experience-technologies {
+            font-size: 9pt;
+            color: #666;
+            margin-bottom: 3pt;
+            font-style: italic;
+        }
+
+        ul.bullets {
+            list-style: disc;
+            margin-left: 16pt;
+            margin-bottom: 4pt;
+        }
+
+        ul.bullets li {
+            font-size: 10pt;
+            margin-bottom: 2pt;
+        }
+
+        /* Education */
+        .education-item {
+            margin-bottom: 6pt;
+        }
+
+        .education-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .education-header .degree {
+            font-weight: 600;
+            font-size: 10.5pt;
+        }
+
+        .education-header .year {
+            font-size: 9.5pt;
+            color: #555;
+        }
+
+        .education-institution {
+            font-size: 9.5pt;
+            color: #555;
+        }
+
+        /* Certifications */
+        ul.certifications {
+            list-style: disc;
+            margin-left: 16pt;
+        }
+
+        ul.certifications li {
+            font-size: 10pt;
+            margin-bottom: 2pt;
+        }
+
+        /* Print settings */
+        @media print {
+            body {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>Vikas Kumar</h1>
+        <div class="contact-info">
+            vikas.kumar.11028@gmail.com
+            <span>•</span> +91-8437217012
+            <span>•</span> Gurgaon, India
+            <span>•</span> <a href="https://linkedin.com/in/vikaskumar1128">LinkedIn</a>
+            <span>•</span> <a href="https://github.com/vikaskumar1128">GitHub</a>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    
+    <h2>Summary</h2>
+    <p class="summary">Results-driven Senior Java Backend Engineer and Assistant Manager with 4+ years of professional experience architecting, developing, and deploying mission-critical distributed systems and enterprise microservices using Spring Boot at Samsung SDS. Deep technical expertise in event-driven streaming, relational/NoSQL database performance tuning, and scalable API design. Proven track record of solo module leadership, reducing bulk data ingestion latency by 60%, and enforcing SonarQube engineering standards.</p>
+    
+
+    <!-- Skills -->
+    
+    <h2>Technical Skills</h2>
+    <p class="skills">Java (Core, 8, 11, 17), Spring Boot, Spring MVC, Spring Data JPA, RESTful APIs, Microservices Architecture, Git, Hibernate, SQL Server, MySQL, Redis, AWS S3, Batch Processing, Docker, Kubernetes, JUnit, Mockito, SonarQube, Dynatrace, Apache POI, Maven, Jenkins, JIRA, Agile/Scrum, System Design, Performance Optimization</p>
+    
+
+    <!-- Experience -->
+    
+    <h2>Experience</h2>
+    
+    <div class="experience-item">
+        <div class="experience-header">
+            <span class="title-company">Assistant Manager (Software Engineering) — Samsung SDS</span>
+            <span class="dates">Mar 2024 – Present</span>
+        </div>
+        
+        <div class="experience-location">Gurgaon, India</div>
+        
+        
+        <div class="experience-technologies">Java 17, Spring Boot, Spring Data JPA, SQL Server, Redis, Apache POI, AWS S3, Dynatrace</div>
+        
+        
+        <ul class="bullets">
+            
+            <li>Enforced engineering excellence across the module lifecycle by establishing SonarQube quality gates, driving peer code reviews, and maintaining 88%+ automated test coverage with JUnit and Mockito.</li>
+            
+            <li>Led the technical architecture and solo implementation of core enterprise modules for Samsung&#39;s Incentive Management System (IMS), successfully delivering business-critical scheme calculation engines with 100% on-time deployment.</li>
+            
+            <li>Reduced bulk Excel upload and processing time by 60% and eliminated Out-Of-Memory (OOM) errors by re-architecting data ingestion using streaming event-based XML parsing (Apache POI SXSSF) and transactional batch processing.</li>
+            
+            <li>Architected and delivered an automated, asynchronous scheme lifecycle workflow orchestrating draft validation, executive approval hierarchies, and dynamic PDF letter generation with scheduled email dispatch, reducing manual operational turnaround by 75%.</li>
+            
+            <li>Enhanced concurrent API throughput by 45% and reduced p99 query latency from 1.1s to under 250ms by optimizing complex SQL Server relational schemas, indexing strategies, and introducing distributed Redis caching.</li>
+            
+        </ul>
+        
+    </div>
+    
+    <div class="experience-item">
+        <div class="experience-header">
+            <span class="title-company">Software Engineer — Samsung SDS</span>
+            <span class="dates">Jul 2022 – Mar 2024</span>
+        </div>
+        
+        <div class="experience-location">Gurgaon, India</div>
+        
+        
+        <div class="experience-technologies">Java 11/17, Spring Boot, Spring MVC, Hibernate, MySQL, AWS S3, Postman, Jenkins</div>
+        
+        
+        <ul class="bullets">
+            
+            <li>Designed and built scalable, object-oriented RESTful microservices using Java and Spring Boot for Samsung&#39;s nationwide retail partner incentive platform.</li>
+            
+            <li>Integrated cloud storage pipelines with AWS S3 for automated archiving and distribution of scheme approval letters and audit records, handling over 500K+ documents.</li>
+            
+            <li>Implemented enterprise security standards including token-based authentication and role-based access control (RBAC), securing sensitive financial incentive and payout calculations.</li>
+            
+            <li>Diagnosed and resolved critical production bottlenecks and database connection timeouts using Dynatrace APM, improving overall system stability to 99.9% uptime.</li>
+            
+            <li>Collaborated across cross-functional teams (Product Management, QA, and Business Operations) in an Agile/Scrum cadence to define requirements, execute sprint planning, and conduct code reviews.</li>
+            
+        </ul>
+        
+    </div>
+    
+    <div class="experience-item">
+        <div class="experience-header">
+            <span class="title-company">Software Engineer Intern — Samsung SDS</span>
+            <span class="dates">Feb 2022 – Jun 2022</span>
+        </div>
+        
+        <div class="experience-location">Gurgaon, India</div>
+        
+        
+        <div class="experience-technologies">Java 8/11, Spring Boot, JUnit, Mockito, Git, Maven</div>
+        
+        
+        <ul class="bullets">
+            
+            <li>Authored comprehensive unit and integration test suites using JUnit and Mockito for REST APIs, increasing regression test coverage by 25%.</li>
+            
+            <li>Gained foundational experience in enterprise software engineering standards, build automation with Maven, and CI/CD workflows in Jenkins.</li>
+            
+        </ul>
+        
+    </div>
+    
+    
+
+    <!-- Education -->
+    
+    <h2>Education</h2>
+    
+    <div class="education-item">
+        <div class="education-header">
+            <span class="degree">B.Tech in Computer Science and Engineering</span>
+            <span class="year">2018 – 2022</span>
+        </div>
+        <div class="education-institution">
+            National Institute of Technology, Jalandhar — GPA: 7.17 / 10
+        </div>
+    </div>
+    
+    
+
+    <!-- Certifications -->
+    
+
+</body>
+</html>
